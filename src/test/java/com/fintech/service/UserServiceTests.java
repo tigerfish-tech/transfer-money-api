@@ -62,6 +62,7 @@ public class UserServiceTests {
     userService.save(updateUser);
   }
 
+  //Create/update user with empty name
   @Test(expected = InvalidParameterException.class)
   public void updateUserEmptyNameExceptionTest() {
     User user = User.builder().fullName("John Smith").build();
@@ -74,6 +75,7 @@ public class UserServiceTests {
     userService.save(updateUserAttempt2);
   }
 
+  //Get user by id
   @Test
   public void getUserByIdSuccessTest() {
     User user = User.builder().fullName("John Smith").build();
@@ -89,7 +91,21 @@ public class UserServiceTests {
 
   @Test(expected = IllegalArgumentException.class)
   public void getUserByIdFailedTest() {
-    User result = userService.getById(UUID.randomUUID().toString());
+    userService.getById(UUID.randomUUID().toString());
+  }
+
+  //Delete user by id
+  @Test
+  public void deleteUserByIdSuccessTest() {
+    User user = User.builder().fullName("John Smith").build();
+    User persisted = userService.save(user);
+
+    userService.delete(persisted.getId());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void deleteUserByIdFailedTest() {
+    userService.delete(UUID.randomUUID().toString());
   }
 
 }

@@ -48,6 +48,11 @@ public class DefaultUserService implements UserService {
 
   @Override
   public void delete(String id) {
+    if (!userStorage.containsKey(id)) {
+      throw new InvalidParameterException(
+          String.format("User with id %s doesn't exists", id));
+    }
 
+    userStorage.remove(id);
   }
 }
