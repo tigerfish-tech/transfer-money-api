@@ -14,7 +14,12 @@ public class DefaultUserService implements UserService {
 
   @Override
   public User getById(String id) {
-    return null;
+    if (!userStorage.containsKey(id)) {
+      throw new InvalidParameterException(
+          String.format("User with id %s doesn't exists", id));
+    }
+
+    return userStorage.get(id);
   }
 
   @Override
@@ -24,7 +29,7 @@ public class DefaultUserService implements UserService {
     }
 
     if (Objects.nonNull(user.getId())) {
-      if (!userStorage.containsKey(user.getId())){
+      if (!userStorage.containsKey(user.getId())) {
         throw new InvalidParameterException(
             String.format("User with id %s doesn't exists", user.getId()));
       }

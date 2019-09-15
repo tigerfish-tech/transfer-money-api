@@ -74,4 +74,22 @@ public class UserServiceTests {
     userService.save(updateUserAttempt2);
   }
 
+  @Test
+  public void getUserByIdSuccessTest() {
+    User user = User.builder().fullName("John Smith").build();
+    User persisted = userService.save(user);
+
+    User result = userService.getById(persisted.getId());
+
+    MatcherAssert.assertThat("Check user id",
+        persisted.getId(), is(result.getId()));
+    MatcherAssert.assertThat("Check user name",
+        persisted.getFullName(), is(result.getFullName()));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void getUserByIdFailedTest() {
+    User result = userService.getById(UUID.randomUUID().toString());
+  }
+
 }
