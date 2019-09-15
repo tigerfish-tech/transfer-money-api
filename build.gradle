@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'checkstyle'
 }
 
 group 'com.fintech'
@@ -9,6 +10,15 @@ sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+}
+
+checkstyle {
+    configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+    configProperties = [
+            'configDir': rootProject.file('config/checkstyle'),
+            'baseDir'  : rootDir,
+    ]
+    toolVersion = '8.11'
 }
 
 dependencies {
