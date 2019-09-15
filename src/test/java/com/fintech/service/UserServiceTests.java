@@ -1,5 +1,6 @@
 package com.fintech.service;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
@@ -9,6 +10,7 @@ import com.fintech.services.UserService;
 import com.fintech.services.impl.DefaultUserService;
 import java.security.InvalidParameterException;
 import java.util.UUID;
+import java.util.stream.IntStream;
 import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Test;
@@ -106,6 +108,16 @@ public class UserServiceTests {
   @Test(expected = IllegalArgumentException.class)
   public void deleteUserByIdFailedTest() {
     userService.delete(UUID.randomUUID().toString());
+  }
+
+  @Test
+  public void findAllSuccessTest() {
+    IntStream.range(0, 10)
+        .boxed()
+        .map(number -> User.builder().fullName("User " + number).build())
+        .forEach(userService::save);
+
+    MatcherAssert.assertThat("Check user list", userService.findAll(), hasSize(10));
   }
 
 }

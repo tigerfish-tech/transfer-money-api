@@ -3,14 +3,16 @@ package com.fintech.services.impl;
 import com.fintech.models.User;
 import com.fintech.services.UserService;
 import java.security.InvalidParameterException;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
 public class DefaultUserService implements UserService {
 
-  private static final Map<String, User> userStorage = new HashMap<>();
+  private static final Map<String, User> userStorage = new LinkedHashMap<>();
 
   @Override
   public User getById(String id) {
@@ -55,4 +57,10 @@ public class DefaultUserService implements UserService {
 
     userStorage.remove(id);
   }
+
+  @Override
+  public List<User> findAll() {
+    return new ArrayList<>(userStorage.values());
+  }
+
 }
