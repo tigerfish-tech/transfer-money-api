@@ -73,7 +73,7 @@ public class UserRouter {
       final Gson gson = new Gson();
       User body = gson.fromJson(new String(bytes, Charset.defaultCharset()), User.class);
 
-      if (userService.isUserExists(userId)) {
+      if (userService.exists(userId)) {
         User update = User.builder().id(userId).fullName(body.getFullName()).build();
 
         User persistedUser = userService.save(update);

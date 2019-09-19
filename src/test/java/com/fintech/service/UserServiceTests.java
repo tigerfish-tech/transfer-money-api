@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 
 import com.fintech.dao.UserDao;
 import com.fintech.models.User;
+import com.fintech.models.dao.UserDaoEntity;
 import com.fintech.services.UserService;
 import com.fintech.services.impl.DefaultUserService;
 import java.security.InvalidParameterException;
@@ -30,7 +31,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class UserServiceTests {
 
   private UserService userService;
-  private UserDao<User, String> userDao;
+  private UserDao<UserDaoEntity, String> userDao;
 
   @Before
   public void startUp() {
@@ -41,11 +42,11 @@ public class UserServiceTests {
   //Create new user and check if id is not null
   @Test
   public void createNewUserSuccessTest() {
-    User persistedUser = User.builder()
-        .id(UUID.randomUUID().toString())
-        .fullName("John Smith").build();
+    UserDaoEntity userDaoEntity = new UserDaoEntity();
+    userDaoEntity.setId(UUID.randomUUID().toString());
+    userDaoEntity.setFullName("John Smith");
 
-    given(userDao.insert(any())).willReturn(persistedUser);
+    given(userDao.insert(any())).willReturn(userDaoEntity);
 
     User newUser = User.builder().fullName("John Smith").build();
 
@@ -62,17 +63,23 @@ public class UserServiceTests {
   @Test
   public void updateExistUserSuccessTest() {
     String id = UUID.randomUUID().toString();
-    User updateUser = User.builder().id(id).fullName("John Snow").build();
 
-    given(userDao.update(updateUser)).willReturn(updateUser);
+    UserDaoEntity userDaoEntity = new UserDaoEntity();
+    userDaoEntity.setId(id);
+    userDaoEntity.setFullName("John Smith");
 
-    User updatedUser = userService.save(updateUser);
+    given(userDao.update(userDaoEntity)).willReturn(userDaoEntity);
+    given(userDao.getById(id)).willReturn(userDaoEntity);
+
+    User updateInfo = User.builder().id(id).fullName("John Smith").build();
+
+    User updatedUser = userService.save(updateInfo);
 
     verify(userDao, times(1)).update(any());
     MatcherAssert.assertThat("Check user id",
-        updatedUser.getId(), is(updateUser.getId()));
+        updatedUser.getId(), is(userDaoEntity.getId()));
     MatcherAssert.assertThat("Check user name",
-        updatedUser.getFullName(), is(updateUser.getFullName()));
+        updatedUser.getFullName(), is(userDaoEntity.getFullName()));
   }
 
   //Create/update user with empty name
@@ -88,19 +95,21 @@ public class UserServiceTests {
   @Test
   public void getUserByIdSuccessTest() {
     String id = UUID.randomUUID().toString();
-    User user = User.builder().id(id).fullName("John Smith").build();
+    UserDaoEntity entity = new UserDaoEntity();
+    entity.setId(id);
+    entity.setFullName("John Smith");
 
     given(userDao.isExist(id)).willReturn(true);
-    given(userDao.getById(id)).willReturn(user);
+    given(userDao.getById(id)).willReturn(entity);
 
     User result = userService.getById(id);
 
     verify(userDao, times(1)).isExist(any());
     verify(userDao, times(1)).getById(any());
     MatcherAssert.assertThat("Check user id",
-        result.getId(), is(user.getId()));
+        result.getId(), is(entity.getId()));
     MatcherAssert.assertThat("Check user name",
-        result.getFullName(), is(user.getFullName()));
+        result.getFullName(), is(entity.getFullName()));
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -141,9 +150,14 @@ public class UserServiceTests {
 
   @Test
   public void findAllSuccessTest() {
-    List<User> users = IntStream.range(0, 10)
+    List<UserDaoEntity> users = IntStream.range(0, 10)
         .boxed()
-        .map(number -> User.builder().fullName("User " + number).build())
+        .map(number -> {
+          UserDaoEntity entity = new UserDaoEntity();
+          entity.setId(UUID.randomUUID().toString());
+          entity.setFullName("User " + number);
+          return entity;
+        })
         .collect(Collectors.toList());
 
     given(userDao.findAll()).willReturn(users);
@@ -158,7 +172,7 @@ public class UserServiceTests {
     given(userDao.isExist(id)).willReturn(true);
 
     MatcherAssert.assertThat("Check user id",
-        userService.isUserExists(id), is(true));
+        userService.exists(id), is(true));
     verify(userDao, times(1)).isExist(any());
   }
 

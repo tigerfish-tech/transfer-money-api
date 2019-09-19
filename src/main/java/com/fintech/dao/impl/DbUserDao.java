@@ -2,7 +2,7 @@ package com.fintech.dao.impl;
 
 import com.fintech.dao.DbConnectionManager;
 import com.fintech.dao.UserDao;
-import com.fintech.models.User;
+import com.fintech.models.dao.UserDaoEntity;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,11 +11,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class DbUserDao implements UserDao<User, String> {
+public class DbUserDao implements UserDao<UserDaoEntity, String> {
 
   @Override
-  public User getById(String s) {
-    User user = null;
+  public UserDaoEntity getById(String s) {
+    UserDaoEntity user = null;
 
     try (Connection connection = DbConnectionManager.getConnection()) {
       PreparedStatement preparedStatement
@@ -34,8 +34,8 @@ public class DbUserDao implements UserDao<User, String> {
   }
 
   @Override
-  public User update(User obj) {
-    User user = null;
+  public UserDaoEntity update(UserDaoEntity obj) {
+    UserDaoEntity user = null;
 
     try (Connection connection = DbConnectionManager.getConnection()) {
       PreparedStatement preparedStatement
@@ -55,8 +55,8 @@ public class DbUserDao implements UserDao<User, String> {
   }
 
   @Override
-  public User insert(User obj) {
-    User user = null;
+  public UserDaoEntity insert(UserDaoEntity obj) {
+    UserDaoEntity user = null;
 
     try (Connection connection = DbConnectionManager.getConnection()) {
       String id = createId();
@@ -77,8 +77,8 @@ public class DbUserDao implements UserDao<User, String> {
   }
 
   @Override
-  public List<User> findAll() {
-    List<User> users = new ArrayList<>();
+  public List<UserDaoEntity> findAll() {
+    List<UserDaoEntity> users = new ArrayList<>();
     try (Connection connection = DbConnectionManager.getConnection()) {
       ResultSet resultSet = connection.createStatement().executeQuery("SELECT * FROM USERS");
 
@@ -105,7 +105,7 @@ public class DbUserDao implements UserDao<User, String> {
   }
 
   @Override
-  public void delete(User obj) {
+  public void delete(UserDaoEntity obj) {
     deleteById(obj.getId());
   }
 
@@ -126,9 +126,12 @@ public class DbUserDao implements UserDao<User, String> {
     return exists;
   }
 
-  private User mapRow(ResultSet resultSet) throws SQLException {
-    return User.builder().id(resultSet.getString("id"))
-        .fullName(resultSet.getString("full_name")).build();
+  private UserDaoEntity mapRow(ResultSet resultSet) throws SQLException {
+    UserDaoEntity entity = new UserDaoEntity();
+    entity.setId(resultSet.getString("id"));
+    entity.setFullName(resultSet.getString("full_name"));
+
+    return entity;
   }
 
   private String createId() {

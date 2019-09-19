@@ -2,16 +2,18 @@ package com.fintech.services.impl;
 
 import com.fintech.dao.UserDao;
 import com.fintech.models.User;
+import com.fintech.models.dao.UserDaoEntity;
 import com.fintech.services.UserService;
 import java.security.InvalidParameterException;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class DefaultUserService implements UserService {
 
-  private UserDao<User, String> userDao;
+  private UserDao<UserDaoEntity, String> userDao;
 
-  public DefaultUserService(UserDao<User, String> userDao) {
+  public DefaultUserService(UserDao<UserDaoEntity, String> userDao) {
     this.userDao = userDao;
   }
 
@@ -22,7 +24,7 @@ public class DefaultUserService implements UserService {
           String.format("User with id %s doesn't exists", id));
     }
 
-    return userDao.getById(id);
+    return User.valueOf(userDao.getById(id));
   }
 
   @Override
@@ -30,13 +32,23 @@ public class DefaultUserService implements UserService {
     if (Objects.isNull(user.getFullName()) || user.getFullName().isEmpty()) {
       throw new InvalidParameterException("User's fullName can't be empty");
     }
-    User result;
+    UserDaoEntity result;
     if (Objects.isNull(user.getId())) {
-      result = userDao.insert(user);
+      UserDaoEntity entity = new UserDaoEntity();
+      entity.setFullName(user.getFullName());
+
+      result = userDao.insert(entity);
     } else {
-      result = userDao.update(user);
+      UserDaoEntity entity = userDao.getById(user.getId());
+
+      if (Objects.nonNull(entity)) {
+        entity.setFullName(user.getFullName());
+        result = userDao.update(entity);
+      } else {
+        throw new InvalidParameterException("User doesn't exist, id " + user.getId());
+      }
     }
-    return result;
+    return User.valueOf(result);
   }
 
   @Override
@@ -51,11 +63,11 @@ public class DefaultUserService implements UserService {
 
   @Override
   public List<User> findAll() {
-    return userDao.findAll();
+    return userDao.findAll().stream().map(User::valueOf).collect(Collectors.toList());
   }
 
   @Override
-  public boolean isUserExists(String id) {
+  public boolean exists(String id) {
     return userDao.isExist(id);
   }
 

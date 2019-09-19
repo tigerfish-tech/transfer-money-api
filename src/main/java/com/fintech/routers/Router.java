@@ -3,7 +3,7 @@ package com.fintech.routers;
 import com.fintech.dao.UserDao;
 import com.fintech.dao.impl.DbUserDao;
 import com.fintech.models.ErrorResponse;
-import com.fintech.models.User;
+import com.fintech.models.dao.UserDaoEntity;
 import com.fintech.services.UserService;
 import com.fintech.services.impl.DefaultUserService;
 import com.google.gson.Gson;
@@ -14,7 +14,7 @@ public enum Router {
 
   INSTANCE;
 
-  private UserDao<User, String> userDao = new DbUserDao();
+  private UserDao<UserDaoEntity, String> userDao = new DbUserDao();
   private UserService userService = new DefaultUserService(userDao);
   private UserRouter userRouter = new UserRouter(userService);
 
