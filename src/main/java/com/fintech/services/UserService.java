@@ -13,4 +13,6 @@ public interface UserService {
 
   List<User> findAll();
 
+  boolean isUserExists(String id);
+
 }
