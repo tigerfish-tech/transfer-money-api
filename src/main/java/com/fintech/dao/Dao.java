@@ -2,9 +2,9 @@ package com.fintech.dao;
 
 import java.util.List;
 
-public interface Dao<T, ID> {
+public interface Dao<T, I> {
 
-  T getById(ID id);
+  T getById(I id);
 
   T insert(T obj);
 
@@ -12,10 +12,10 @@ public interface Dao<T, ID> {
 
   List<T> findAll();
 
-  void deleteById(ID id);
+  void deleteById(I id);
 
   void delete(T obj);
 
-  boolean isExist(ID id);
+  boolean isExist(I id);
 
 }

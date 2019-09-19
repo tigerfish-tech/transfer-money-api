@@ -27,7 +27,7 @@ public class DbUserDao implements UserDao<UserDaoEntity, String> {
         user = mapRow(resultSet);
       }
     } catch (SQLException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
 
     return user;
@@ -120,7 +120,7 @@ public class DbUserDao implements UserDao<UserDaoEntity, String> {
 
       exists = preparedStatement.executeQuery().next();
     } catch (SQLException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
 
     return exists;

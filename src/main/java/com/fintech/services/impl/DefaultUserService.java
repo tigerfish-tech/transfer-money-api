@@ -4,7 +4,6 @@ import com.fintech.dao.UserDao;
 import com.fintech.models.User;
 import com.fintech.models.dao.UserDaoEntity;
 import com.fintech.services.UserService;
-import java.security.InvalidParameterException;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -20,7 +19,7 @@ public class DefaultUserService implements UserService {
   @Override
   public User getById(String id) {
     if (!userDao.isExist(id)) {
-      throw new InvalidParameterException(
+      throw new IllegalArgumentException(
           String.format("User with id %s doesn't exists", id));
     }
 
@@ -30,7 +29,7 @@ public class DefaultUserService implements UserService {
   @Override
   public User save(User user) {
     if (Objects.isNull(user.getFullName()) || user.getFullName().isEmpty()) {
-      throw new InvalidParameterException("User's fullName can't be empty");
+      throw new IllegalArgumentException("User's fullName can't be empty");
     }
     UserDaoEntity result;
     if (Objects.isNull(user.getId())) {
@@ -45,7 +44,7 @@ public class DefaultUserService implements UserService {
         entity.setFullName(user.getFullName());
         result = userDao.update(entity);
       } else {
-        throw new InvalidParameterException("User doesn't exist, id " + user.getId());
+        throw new IllegalArgumentException("User doesn't exist, id " + user.getId());
       }
     }
     return User.valueOf(result);
@@ -54,7 +53,7 @@ public class DefaultUserService implements UserService {
   @Override
   public void delete(String id) {
     if (!userDao.isExist(id)) {
-      throw new InvalidParameterException(
+      throw new IllegalArgumentException(
           String.format("User with id %s doesn't exists", id));
     }
 

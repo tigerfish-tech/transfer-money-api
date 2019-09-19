@@ -7,7 +7,6 @@ import com.google.gson.Gson;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
 import java.nio.charset.Charset;
-import java.security.InvalidParameterException;
 import java.util.List;
 
 public class UserRouter {
@@ -30,7 +29,7 @@ public class UserRouter {
         exc.getResponseHeaders()
             .add(HttpString.tryFromString("Content-Type"), "application/json");
         exc.getResponseSender().send(gson.toJson(user));
-      } catch (InvalidParameterException e) {
+      } catch (IllegalArgumentException e) {
         exc.setStatusCode(400);
         exc.getResponseHeaders()
             .add(HttpString.tryFromString("Content-Type"), "application/json");
@@ -54,7 +53,7 @@ public class UserRouter {
         exc.getResponseHeaders()
             .add(HttpString.tryFromString("Content-Type"), "application/json");
         exc.getResponseSender().send(gson.toJson(persistedUser));
-      } catch (InvalidParameterException e) {
+      } catch (IllegalArgumentException e) {
         exc.setStatusCode(400);
         exc.getResponseHeaders()
             .add(HttpString.tryFromString("Content-Type"), "application/json");
@@ -99,7 +98,7 @@ public class UserRouter {
       try {
         userService.delete(userId);
         exc.setStatusCode(200);
-      } catch (InvalidParameterException e) {
+      } catch (IllegalArgumentException e) {
         exc.setStatusCode(404);
       }
     });
