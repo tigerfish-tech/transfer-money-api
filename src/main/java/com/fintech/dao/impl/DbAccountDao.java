@@ -54,7 +54,7 @@ public class DbAccountDao implements AccountDao<AccountDaoEntity, String> {
 
   @Override
   public AccountDaoEntity update(AccountDaoEntity obj) {
-    AccountDaoEntity user = null;
+    AccountDaoEntity account = null;
 
     try (Connection connection = DbConnectionManager.getConnection()) {
       PreparedStatement preparedStatement
@@ -66,17 +66,17 @@ public class DbAccountDao implements AccountDao<AccountDaoEntity, String> {
 
       preparedStatement.executeUpdate();
 
-      user = getById(obj.getNumber());
+      account = getById(obj.getNumber());
     } catch (SQLException e) {
       throw new RuntimeException(e);
     }
 
-    return user;
+    return account;
   }
 
   @Override
   public AccountDaoEntity insert(AccountDaoEntity obj) {
-    AccountDaoEntity user = null;
+    AccountDaoEntity account = null;
 
     try (Connection connection = DbConnectionManager.getConnection()) {
       String number = createNumber();
@@ -90,12 +90,12 @@ public class DbAccountDao implements AccountDao<AccountDaoEntity, String> {
 
       preparedStatement.executeUpdate();
 
-      user = getById(number);
+      account = getById(number);
     } catch (SQLException e) {
       throw new RuntimeException(e);
     }
 
-    return user;
+    return account;
   }
 
   @Override

@@ -1,15 +1,20 @@
 package com.fintech.routers;
 
 import com.fintech.dao.AccountDao;
+import com.fintech.dao.OperationDao;
 import com.fintech.dao.UserDao;
 import com.fintech.dao.impl.DbAccountDao;
+import com.fintech.dao.impl.DbOperationDao;
 import com.fintech.dao.impl.DbUserDao;
 import com.fintech.models.ErrorResponse;
 import com.fintech.models.dao.AccountDaoEntity;
+import com.fintech.models.dao.OperationDaoEntity;
 import com.fintech.models.dao.UserDaoEntity;
 import com.fintech.services.AccountService;
+import com.fintech.services.TransactionService;
 import com.fintech.services.UserService;
 import com.fintech.services.impl.DefaultAccountService;
+import com.fintech.services.impl.DefaultTransactionService;
 import com.fintech.services.impl.DefaultUserService;
 import com.google.gson.Gson;
 import io.undertow.server.RoutingHandler;
@@ -26,6 +31,11 @@ public enum Router {
   private AccountDao<AccountDaoEntity, String> accountDao = new DbAccountDao();
   private AccountService accountService = new DefaultAccountService(accountDao, userService);
   private AccountRouter accountRouter = new AccountRouter(accountService);
+
+  private OperationDao<OperationDaoEntity, Long> operationDao = new DbOperationDao();
+  private TransactionService transactionService
+      = new DefaultTransactionService(operationDao, accountService);
+  private TransactionRouter transactionRouter = new TransactionRouter(transactionService);
 
   private final RoutingHandler handler = new RoutingHandler()
       .addAll(userRoutingHandler())
@@ -65,7 +75,10 @@ public enum Router {
         .get("/account/{number}", accountRouter::accountInfo)
         .post("/users/{userId}/account", accountRouter::createAccount)
         .get("/users/{userId}/account", accountRouter::userAccounts)
-        .delete("/account/{number}", accountRouter::delete);
+        .delete("/account/{number}", accountRouter::delete)
+        .post("/account/{number}/cash-in", transactionRouter::cashIn)
+        .post("/account/{number}/withdraw", transactionRouter::withdraw)
+        .get("/account/{number}/balance", transactionRouter::balance);
   }
 
   public static Router getInstance() {
