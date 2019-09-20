@@ -44,6 +44,7 @@ public class TransactionServiceTests {
     transactionService = new DefaultTransactionService(operationDao, transferDao, accountService);
   }
 
+  //Cash in money
   @Test
   public void cashInSuccessTest() {
     String account = "123456789";
@@ -80,6 +81,7 @@ public class TransactionServiceTests {
     verify(operationDao, never()).insert(any());
   }
 
+  //Withdraw money
   @Test
   public void withdrawSuccessTest() {
     String account = "123456789";
@@ -132,6 +134,7 @@ public class TransactionServiceTests {
     verify(operationDao, never()).insert(any());
   }
 
+  //Transfer money between accounts
   @Test
   public void transferMoneySuccessTest() {
     String from = "12345";
@@ -234,6 +237,33 @@ public class TransactionServiceTests {
     verify(operationDao, times(1)).accountBalance(any());
     verify(operationDao, never()).insert(any());
     verify(transferDao, never()).insert(any());
+  }
+
+  //Delete transfer by id
+  @Test
+  public void deleteTransferByIdSuccessTest() {
+    Long id = 1L;
+    given(transferDao.isExist(id)).willReturn(true);
+
+    transactionService.delete(id);
+
+    ArgumentCaptor<Long> argumentCaptor = ArgumentCaptor.forClass(Long.class);
+    verify(transferDao, times(1)).isExist(any());
+    verify(transferDao, times(1)).deleteById(argumentCaptor.capture());
+    MatcherAssert.assertThat("Check param", argumentCaptor.getValue(), is(id));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void deleteTransferByIdExceptionTest() {
+    Long id = 1L;
+    given(transferDao.isExist(id)).willReturn(false);
+
+    transactionService.delete(id);
+
+    ArgumentCaptor<Long> argumentCaptor = ArgumentCaptor.forClass(Long.class);
+    verify(transferDao, times(1)).isExist(argumentCaptor.capture());
+    verify(transferDao, never()).deleteById(any());
+    MatcherAssert.assertThat("Check param", argumentCaptor.getValue(), is(id));
   }
 
   private OperationDaoEntity createOperation(Long id, String account,

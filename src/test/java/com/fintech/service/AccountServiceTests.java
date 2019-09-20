@@ -64,7 +64,6 @@ public class AccountServiceTests {
         result.getCurrency(), is("USD"));
   }
 
-  //Add new account to user
   @Test(expected = IllegalArgumentException.class)
   public void createNewAccountNoUserExceptionTest() {
     String userId = UUID.randomUUID().toString();
@@ -76,7 +75,6 @@ public class AccountServiceTests {
     verify(accountDao, never()).insert(any());
   }
 
-  //Add new account to user
   @Test(expected = IllegalArgumentException.class)
   public void createNewAccountEmptyCurrencyExceptionTest() {
     String userId = UUID.randomUUID().toString();
@@ -145,7 +143,7 @@ public class AccountServiceTests {
     verify(accountDao, never()).getById(any());
   }
 
-  //Delete user by id
+  //Delete account by number
   @Test
   public void deleteAccountByNumberSuccessTest() {
     String number = "123456789";
