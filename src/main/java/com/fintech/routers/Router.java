@@ -2,13 +2,16 @@ package com.fintech.routers;
 
 import com.fintech.dao.AccountDao;
 import com.fintech.dao.OperationDao;
+import com.fintech.dao.TransferDao;
 import com.fintech.dao.UserDao;
 import com.fintech.dao.impl.DbAccountDao;
 import com.fintech.dao.impl.DbOperationDao;
+import com.fintech.dao.impl.DbTransferDao;
 import com.fintech.dao.impl.DbUserDao;
 import com.fintech.models.ErrorResponse;
 import com.fintech.models.dao.AccountDaoEntity;
 import com.fintech.models.dao.OperationDaoEntity;
+import com.fintech.models.dao.TransferDaoEntity;
 import com.fintech.models.dao.UserDaoEntity;
 import com.fintech.services.AccountService;
 import com.fintech.services.TransactionService;
@@ -33,8 +36,9 @@ public enum Router {
   private AccountRouter accountRouter = new AccountRouter(accountService);
 
   private OperationDao<OperationDaoEntity, Long> operationDao = new DbOperationDao();
+  private TransferDao<TransferDaoEntity, Long> transferDao = new DbTransferDao();
   private TransactionService transactionService
-      = new DefaultTransactionService(operationDao, accountService);
+      = new DefaultTransactionService(operationDao, transferDao, accountService);
   private TransactionRouter transactionRouter = new TransactionRouter(transactionService);
 
   private final RoutingHandler handler = new RoutingHandler()
@@ -72,13 +76,14 @@ public enum Router {
 
   private RoutingHandler accountRoutingHandler() {
     return new RoutingHandler()
-        .get("/account/{number}", accountRouter::accountInfo)
+        .get("/accounts/{number}", accountRouter::accountInfo)
         .post("/users/{userId}/account", accountRouter::createAccount)
         .get("/users/{userId}/account", accountRouter::userAccounts)
-        .delete("/account/{number}", accountRouter::delete)
-        .post("/account/{number}/cash-in", transactionRouter::cashIn)
-        .post("/account/{number}/withdraw", transactionRouter::withdraw)
-        .get("/account/{number}/balance", transactionRouter::balance);
+        .delete("/accounts/{number}", accountRouter::delete)
+        .post("/accounts/{number}/cash-in", transactionRouter::cashIn)
+        .post("/accounts/{number}/withdraw", transactionRouter::withdraw)
+        .get("/accounts/{number}/balance", transactionRouter::balance)
+        .post("/accounts/transfer", transactionRouter::transfer);
   }
 
   public static Router getInstance() {

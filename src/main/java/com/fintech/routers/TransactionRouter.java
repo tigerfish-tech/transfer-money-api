@@ -1,6 +1,7 @@
 package com.fintech.routers;
 
 import com.fintech.models.ErrorResponse;
+import com.fintech.models.TransferOperation;
 import com.fintech.services.TransactionService;
 import com.google.gson.Gson;
 import io.undertow.server.HttpServerExchange;
@@ -47,6 +48,23 @@ public class TransactionRouter {
       try {
         exc.setStatusCode(200);
         exc.getResponseSender().send(transactionService.balance(number).toPlainString());
+      } catch (IllegalArgumentException e) {
+        createErrorResponse(exc, e);
+      }
+    });
+  }
+
+  void transfer(HttpServerExchange exchange) {
+    exchange.getRequestReceiver().receiveFullBytes((exc, bytes) -> {
+      String from = exc.getQueryParameters().get("from").getFirst();
+      String to = exc.getQueryParameters().get("to").getFirst();
+      double amount = Double.parseDouble(exc.getQueryParameters().get("amount").getFirst());
+      try {
+        TransferOperation operation = TransferOperation.builder()
+            .accountFrom(from).accountTo(to).amount(BigDecimal.valueOf(amount)).build();
+        transactionService.transfer(operation);
+
+        exc.setStatusCode(200);
       } catch (IllegalArgumentException e) {
         createErrorResponse(exc, e);
       }

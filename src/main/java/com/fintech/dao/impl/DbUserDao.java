@@ -130,6 +130,7 @@ public class DbUserDao implements UserDao<UserDaoEntity, String> {
     UserDaoEntity entity = new UserDaoEntity();
     entity.setId(resultSet.getString("id"));
     entity.setFullName(resultSet.getString("full_name"));
+    entity.setCreated(resultSet.getTimestamp("created").toLocalDateTime());
 
     return entity;
   }

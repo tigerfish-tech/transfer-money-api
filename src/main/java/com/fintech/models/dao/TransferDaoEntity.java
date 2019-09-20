@@ -1,18 +1,16 @@
 package com.fintech.models.dao;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class OperationDaoEntity {
+public class TransferDaoEntity {
 
   private Long id;
-  private String accountNumber;
-  private BigDecimal debit;
-  private BigDecimal credit;
   private LocalDateTime created;
+  private List<Long> operations;
 
 }

@@ -151,6 +151,7 @@ public class DbOperationDao implements OperationDao<OperationDaoEntity, Long> {
     entity.setAccountNumber(resultSet.getString("account"));
     entity.setDebit(resultSet.getBigDecimal("debit"));
     entity.setCredit(resultSet.getBigDecimal("credit"));
+    entity.setCreated(resultSet.getTimestamp("created").toLocalDateTime());
 
     return entity;
   }

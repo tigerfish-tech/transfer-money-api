@@ -1,5 +1,6 @@
 package com.fintech.services;
 
+import com.fintech.models.TransferOperation;
 import java.math.BigDecimal;
 
 public interface TransactionService {
@@ -9,5 +10,7 @@ public interface TransactionService {
   void withdraw(String account, BigDecimal amount);
 
   BigDecimal balance(String account);
+
+  void transfer(TransferOperation operation);
 
 }

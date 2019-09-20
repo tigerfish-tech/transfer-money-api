@@ -153,6 +153,7 @@ public class DbAccountDao implements AccountDao<AccountDaoEntity, String> {
     entity.setCurrency(resultSet.getString("currency"));
     entity.setUserId(resultSet.getString("user_id"));
     entity.setNumber(resultSet.getString("number"));
+    entity.setCreated(resultSet.getTimestamp("created").toLocalDateTime());
 
     return entity;
   }

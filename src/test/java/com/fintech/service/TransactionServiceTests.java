@@ -1,5 +1,6 @@
 package com.fintech.service;
 
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.mockito.ArgumentMatchers.any;
@@ -10,7 +11,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.fintech.dao.OperationDao;
+import com.fintech.dao.TransferDao;
+import com.fintech.models.Account;
+import com.fintech.models.TransferOperation;
 import com.fintech.models.dao.OperationDaoEntity;
+import com.fintech.models.dao.TransferDaoEntity;
 import com.fintech.services.AccountService;
 import com.fintech.services.TransactionService;
 import com.fintech.services.impl.DefaultTransactionService;
@@ -28,13 +33,15 @@ public class TransactionServiceTests {
   private TransactionService transactionService;
   private AccountService accountService;
   private OperationDao<OperationDaoEntity, Long> operationDao;
+  private TransferDao<TransferDaoEntity, Long> transferDao;
 
   @Before
   public void setUp() {
     accountService = mock(AccountService.class);
     operationDao = mock(OperationDao.class);
+    transferDao = mock(TransferDao.class);
 
-    transactionService = new DefaultTransactionService(operationDao, accountService);
+    transactionService = new DefaultTransactionService(operationDao, transferDao, accountService);
   }
 
   @Test
@@ -123,6 +130,121 @@ public class TransactionServiceTests {
     verify(accountService, times(1)).exists(any());
     verify(operationDao, times(1)).accountBalance(any());
     verify(operationDao, never()).insert(any());
+  }
+
+  @Test
+  public void transferMoneySuccessTest() {
+    String from = "12345";
+    String to = "23456";
+    BigDecimal amount = BigDecimal.valueOf(50);
+
+    TransferDaoEntity entity = new TransferDaoEntity();
+
+    Account accFrom = Account.builder().number(from).currency("USD").build();
+    Account accTo = Account.builder().number(to).currency("USD").build();
+
+    given(accountService.exists(any())).willReturn(true);
+    given(accountService.getByNumber(any())).willReturn(accFrom).willReturn(accTo);
+    given(operationDao.accountBalance(from)).willReturn(BigDecimal.valueOf(100));
+
+    OperationDaoEntity operationFrom = createOperation(1L, from, null, amount);
+    OperationDaoEntity operationTo = createOperation(2L, to, amount, null);
+    given(operationDao.insert(any())).willReturn(operationFrom).willReturn(operationTo);
+
+    given(transferDao.insert(any())).willReturn(entity);
+
+    TransferOperation operation = TransferOperation.builder()
+        .accountFrom(from).accountTo(to).amount(amount).build();
+
+    transactionService.transfer(operation);
+
+    verify(accountService, times(2)).exists(any());
+    verify(operationDao, times(1)).accountBalance(any());
+    verify(accountService, times(2)).getByNumber(any());
+    verify(operationDao, times(2)).insert(any());
+
+    ArgumentCaptor<TransferDaoEntity> argumentCaptor
+        = ArgumentCaptor.forClass(TransferDaoEntity.class);
+    verify(transferDao, times(1)).insert(argumentCaptor.capture());
+
+    TransferDaoEntity arg = argumentCaptor.getValue();
+    MatcherAssert.assertThat("Check account", arg.getOperations(), hasSize(2));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void transferNoAccountExceptionTest() {
+    String from = "12345";
+    String to = "23456";
+    BigDecimal amount = BigDecimal.valueOf(50);
+
+    given(accountService.exists(any())).willReturn(false);
+
+    TransferOperation operation = TransferOperation.builder()
+        .accountFrom(from).accountTo(to).amount(amount).build();
+
+    transactionService.transfer(operation);
+
+    verify(accountService, times(2)).exists(any());
+    verify(operationDao, never()).accountBalance(any());
+    verify(accountService, never()).getByNumber(any());
+    verify(operationDao, never()).insert(any());
+    verify(transferDao, never()).insert(any());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void transferNoMoneyExceptionTest() {
+    String from = "12345";
+    String to = "23456";
+    BigDecimal amount = BigDecimal.valueOf(50);
+
+    given(accountService.exists(any())).willReturn(true);
+    given(operationDao.accountBalance(from)).willReturn(BigDecimal.valueOf(10));
+
+    TransferOperation operation = TransferOperation.builder()
+        .accountFrom(from).accountTo(to).amount(amount).build();
+
+    transactionService.transfer(operation);
+
+    verify(accountService, times(2)).exists(any());
+    verify(operationDao, times(1)).accountBalance(any());
+    verify(accountService, never()).getByNumber(any());
+    verify(operationDao, never()).insert(any());
+    verify(transferDao, never()).insert(any());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void transferMismatchCurrenciesExceptionTest() {
+    String from = "12345";
+    String to = "23456";
+    BigDecimal amount = BigDecimal.valueOf(50);
+
+    given(accountService.exists(any())).willReturn(true);
+    given(operationDao.accountBalance(from)).willReturn(BigDecimal.valueOf(100));
+    Account accFrom = Account.builder().number(from).currency("USD").build();
+    Account accTo = Account.builder().number(to).currency("EUR").build();
+    given(accountService.getByNumber(any())).willReturn(accFrom).willReturn(accTo);
+
+    TransferOperation operation = TransferOperation.builder()
+        .accountFrom(from).accountTo(to).amount(amount).build();
+
+    transactionService.transfer(operation);
+
+    verify(accountService, times(1)).exists(any());
+    verify(accountService, times(2)).getByNumber(any());
+    verify(operationDao, times(1)).accountBalance(any());
+    verify(operationDao, never()).insert(any());
+    verify(transferDao, never()).insert(any());
+  }
+
+  private OperationDaoEntity createOperation(Long id, String account,
+                                             BigDecimal debit, BigDecimal credit) {
+    OperationDaoEntity operationDaoEntity = new OperationDaoEntity();
+    operationDaoEntity.setId(id);
+    operationDaoEntity.setAccountNumber(account);
+    operationDaoEntity.setDebit(debit);
+    operationDaoEntity.setCredit(credit);
+
+    return operationDaoEntity;
   }
 
 }
