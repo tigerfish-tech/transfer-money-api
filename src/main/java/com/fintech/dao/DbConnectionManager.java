@@ -29,7 +29,7 @@ public class DbConnectionManager {
     ds = new HikariDataSource(config);
 
     Flyway flyway = Flyway.configure()
-        .dataSource("jdbc:h2:mem:test", "sa", "sa").load();
+        .dataSource(config.getJdbcUrl(), config.getUsername(), config.getPassword()).load();
     flyway.migrate();
   }
 
