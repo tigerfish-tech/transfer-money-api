@@ -83,8 +83,23 @@ public class DbTransferDao implements TransferDao<TransferDaoEntity, Long> {
   }
 
   @Override
-  public List<TransferDaoEntity> findAll() {
-    throw new UnsupportedOperationException();
+  public List<TransferDaoEntity> findAll(Integer limit, Integer offset) {
+    List<TransferDaoEntity> transfers = new ArrayList<>();
+    try (Connection connection = DbConnectionManager.getConnection()) {
+      PreparedStatement preparedStatement
+          = connection.prepareStatement("SELECT id FROM TRANSFERS LIMIT ? OFFSET ?");
+      preparedStatement.setInt(1, limit);
+      preparedStatement.setInt(2, offset);
+
+      ResultSet resultSet = preparedStatement.executeQuery();
+
+      while (resultSet.next()) {
+        transfers.add(getById(resultSet.getLong(1)));
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
+    return transfers;
   }
 
   @Override
@@ -97,6 +112,7 @@ public class DbTransferDao implements TransferDao<TransferDaoEntity, Long> {
             = connection.prepareStatement(
             "DELETE FROM OPERATIONS WHERE id = ?");
         operationDeleteStatement.setLong(1, operationId);
+        operationDeleteStatement.executeUpdate();
 
         PreparedStatement transferOpDeleteStatement
             = connection.prepareStatement(
@@ -124,7 +140,19 @@ public class DbTransferDao implements TransferDao<TransferDaoEntity, Long> {
 
   @Override
   public boolean isExist(Long id) {
-    throw new UnsupportedOperationException();
+    boolean exists = false;
+
+    try (Connection connection = DbConnectionManager.getConnection()) {
+      PreparedStatement preparedStatement
+          = connection.prepareStatement("SELECT * FROM TRANSFERS WHERE id = ?");
+      preparedStatement.setLong(1, id);
+
+      exists = preparedStatement.executeQuery().next();
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
+
+    return exists;
   }
 
   private TransferDaoEntity mapRow(ResultSet resultSet) throws SQLException {

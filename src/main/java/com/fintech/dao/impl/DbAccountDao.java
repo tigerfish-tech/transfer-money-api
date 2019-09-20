@@ -99,10 +99,11 @@ public class DbAccountDao implements AccountDao<AccountDaoEntity, String> {
   }
 
   @Override
-  public List<AccountDaoEntity> findAll() {
+  public List<AccountDaoEntity> findAll(Integer limit, Integer offset) {
     List<AccountDaoEntity> accounts = new ArrayList<>();
     try (Connection connection = DbConnectionManager.getConnection()) {
-      ResultSet resultSet = connection.createStatement().executeQuery("SELECT * FROM ACCOUNTS");
+      ResultSet resultSet = connection.createStatement().executeQuery(
+          "SELECT * FROM ACCOUNTS LIMIT ? OFFSET ?");
 
       while (resultSet.next()) {
         accounts.add(mapRow(resultSet));

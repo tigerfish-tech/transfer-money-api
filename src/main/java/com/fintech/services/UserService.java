@@ -13,6 +13,8 @@ public interface UserService {
 
   List<User> findAll();
 
+  List<User> findAll(Integer limit, Integer offset);
+
   boolean exists(String id);
 
 }

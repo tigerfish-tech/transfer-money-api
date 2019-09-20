@@ -44,6 +44,7 @@ public enum Router {
   private final RoutingHandler handler = new RoutingHandler()
       .addAll(userRoutingHandler())
       .addAll(accountRoutingHandler())
+      .addAll(transferRoutingHandler())
       .setFallbackHandler(exchange -> {
         Gson gson = new Gson();
         exchange.setStatusCode(400);
@@ -65,6 +66,10 @@ public enum Router {
                 .timestamp(System.currentTimeMillis()).build()));
       });
 
+  public static Router getInstance() {
+    return INSTANCE;
+  }
+
   private RoutingHandler userRoutingHandler() {
     return new RoutingHandler()
         .get("/users", userRouter::list)
@@ -77,17 +82,19 @@ public enum Router {
   private RoutingHandler accountRoutingHandler() {
     return new RoutingHandler()
         .get("/accounts/{number}", accountRouter::accountInfo)
-        .post("/users/{userId}/account", accountRouter::createAccount)
-        .get("/users/{userId}/account", accountRouter::userAccounts)
+        .post("/users/{userId}/accounts", accountRouter::createAccount)
+        .get("/users/{userId}/accounts", accountRouter::userAccounts)
         .delete("/accounts/{number}", accountRouter::delete)
         .post("/accounts/{number}/cash-in", transactionRouter::cashIn)
         .post("/accounts/{number}/withdraw", transactionRouter::withdraw)
-        .get("/accounts/{number}/balance", transactionRouter::balance)
-        .post("/accounts/transfer", transactionRouter::transfer);
+        .get("/accounts/{number}/balance", transactionRouter::balance);
   }
 
-  public static Router getInstance() {
-    return INSTANCE;
+  private RoutingHandler transferRoutingHandler() {
+    return new RoutingHandler()
+        .post("/transfers", transactionRouter::transfer)
+        .get("/transfers", transactionRouter::list)
+        .delete("/transfers/{transferId}", transactionRouter::delete);
   }
 
   public RoutingHandler routingHandler() {

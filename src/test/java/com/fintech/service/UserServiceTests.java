@@ -164,9 +164,10 @@ public class UserServiceTests {
         })
         .collect(Collectors.toList());
 
-    given(userDao.findAll()).willReturn(users);
-    MatcherAssert.assertThat("Check user list", userService.findAll(), hasSize(10));
-    verify(userDao, times(1)).findAll();
+    given(userDao.findAll(10, 0)).willReturn(users);
+    MatcherAssert.assertThat("Check user list",
+        userService.findAll(10, 0), hasSize(10));
+    verify(userDao, times(1)).findAll(10, 0);
   }
 
   @Test

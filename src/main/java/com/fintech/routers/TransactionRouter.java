@@ -2,11 +2,16 @@ package com.fintech.routers;
 
 import com.fintech.models.ErrorResponse;
 import com.fintech.models.TransferOperation;
+import com.fintech.models.TransferRepresentation;
 import com.fintech.services.TransactionService;
+import com.fintech.utils.LocalDateTimeAdapter;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 
 public class TransactionRouter {
 
@@ -67,6 +72,41 @@ public class TransactionRouter {
         exc.setStatusCode(200);
       } catch (IllegalArgumentException e) {
         createErrorResponse(exc, e);
+      }
+    });
+  }
+
+  void list(HttpServerExchange exchange) {
+    exchange.getRequestReceiver().receiveFullBytes((exc, bytes) -> {
+      Integer limit = 100;
+      Integer offset = 0;
+      if (exc.getQueryParameters().containsKey("limit")) {
+        limit = Integer.valueOf(exc.getQueryParameters().get("limit").getFirst());
+      }
+      if (exc.getQueryParameters().containsKey("offset")) {
+        offset = Integer.valueOf(exc.getQueryParameters().get("offset").getFirst());
+      }
+
+      List<TransferRepresentation> transferRepresentations
+          = transactionService.findAll(limit, offset);
+      exc.setStatusCode(200);
+      exc.getResponseHeaders()
+          .add(HttpString.tryFromString("Content-Type"), "application/json");
+      final Gson gson = new GsonBuilder()
+          .setPrettyPrinting()
+          .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter()).create();
+      exc.getResponseSender().send(gson.toJson(transferRepresentations));
+    });
+  }
+
+  void delete(HttpServerExchange exchange) {
+    exchange.getRequestReceiver().receiveFullBytes((exc, bytes) -> {
+      Long transferId = Long.parseLong(exc.getQueryParameters().get("transferId").getFirst());
+      try {
+        transactionService.delete(transferId);
+        exc.setStatusCode(200);
+      } catch (IllegalArgumentException e) {
+        exc.setStatusCode(404);
       }
     });
   }

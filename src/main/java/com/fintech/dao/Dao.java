@@ -10,7 +10,7 @@ public interface Dao<T, I> {
 
   T update(T obj);
 
-  List<T> findAll();
+  List<T> findAll(Integer limit, Integer offset);
 
   void deleteById(I id);
 

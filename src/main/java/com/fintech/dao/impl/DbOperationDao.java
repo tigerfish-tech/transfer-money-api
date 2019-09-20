@@ -86,7 +86,7 @@ public class DbOperationDao implements OperationDao<OperationDaoEntity, Long> {
   }
 
   @Override
-  public List<OperationDaoEntity> findAll() {
+  public List<OperationDaoEntity> findAll(Integer limit, Integer offset) {
     throw new UnsupportedOperationException();
   }
 

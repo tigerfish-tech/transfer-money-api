@@ -4,6 +4,7 @@ import com.fintech.dao.OperationDao;
 import com.fintech.dao.TransferDao;
 import com.fintech.models.Account;
 import com.fintech.models.TransferOperation;
+import com.fintech.models.TransferRepresentation;
 import com.fintech.models.dao.OperationDaoEntity;
 import com.fintech.models.dao.TransferDaoEntity;
 import com.fintech.services.AccountService;
@@ -11,6 +12,8 @@ import com.fintech.services.TransactionService;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class DefaultTransactionService implements TransactionService {
 
@@ -97,6 +100,21 @@ public class DefaultTransactionService implements TransactionService {
     transferDao.insert(transferDaoEntity);
   }
 
+  @Override
+  public List<TransferRepresentation> findAll(Integer limit, Integer offset) {
+    return transferDao.findAll(limit, offset).stream()
+        .map(this::valueOf).collect(Collectors.toList());
+  }
+
+  @Override
+  public void delete(Long id) {
+    if (!transferDao.isExist(id)) {
+      throw new IllegalArgumentException("Transfer " + id + " doesn't exist");
+    }
+
+    transferDao.deleteById(id);
+  }
+
   private boolean isAccountExist(String account) {
     return accountService.exists(account);
   }
@@ -114,6 +132,24 @@ public class DefaultTransactionService implements TransactionService {
     entity.setCredit(credit);
 
     return entity;
+  }
+
+  private TransferRepresentation valueOf(TransferDaoEntity transferDaoEntity) {
+    OperationDaoEntity operationDaoEntity1
+        = operationDao.getById(transferDaoEntity.getOperations().get(0));
+    OperationDaoEntity operationDaoEntity2
+        = operationDao.getById(transferDaoEntity.getOperations().get(1));
+
+    String from = Objects.isNull(operationDaoEntity1.getCredit())
+        ? operationDaoEntity2.getAccountNumber() : operationDaoEntity1.getAccountNumber();
+    String to = Objects.isNull(operationDaoEntity1.getCredit())
+        ? operationDaoEntity1.getAccountNumber() : operationDaoEntity2.getAccountNumber();
+
+    BigDecimal amount = Objects.isNull(operationDaoEntity1.getCredit())
+        ? operationDaoEntity1.getDebit() : operationDaoEntity1.getCredit();
+
+    return TransferRepresentation.builder().accountFrom(from).accountTo(to).amount(amount)
+        .id(transferDaoEntity.getId()).created(transferDaoEntity.getCreated()).build();
   }
 
 }
