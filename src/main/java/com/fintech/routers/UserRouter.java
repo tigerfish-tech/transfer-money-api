@@ -107,8 +107,16 @@ public class UserRouter {
   void list(HttpServerExchange exchange) {
     exchange.getRequestReceiver().receiveFullBytes((exc, bytes) -> {
       final Gson gson = new Gson();
+      Integer limit = 100;
+      Integer offset = 0;
+      if (exc.getQueryParameters().containsKey("limit")) {
+        limit = Integer.valueOf(exc.getQueryParameters().get("limit").getFirst());
+      }
+      if (exc.getQueryParameters().containsKey("offset")) {
+        offset = Integer.valueOf(exc.getQueryParameters().get("offset").getFirst());
+      }
 
-      List<User> users = userService.findAll();
+      List<User> users = userService.findAll(limit, offset);
       exc.setStatusCode(200);
       exc.getResponseHeaders()
           .add(HttpString.tryFromString("Content-Type"), "application/json");

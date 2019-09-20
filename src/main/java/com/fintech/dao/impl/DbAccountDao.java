@@ -54,7 +54,7 @@ public class DbAccountDao implements AccountDao<AccountDaoEntity, String> {
 
   @Override
   public AccountDaoEntity update(AccountDaoEntity obj) {
-    AccountDaoEntity user = null;
+    AccountDaoEntity account = null;
 
     try (Connection connection = DbConnectionManager.getConnection()) {
       PreparedStatement preparedStatement
@@ -66,17 +66,17 @@ public class DbAccountDao implements AccountDao<AccountDaoEntity, String> {
 
       preparedStatement.executeUpdate();
 
-      user = getById(obj.getNumber());
+      account = getById(obj.getNumber());
     } catch (SQLException e) {
       throw new RuntimeException(e);
     }
 
-    return user;
+    return account;
   }
 
   @Override
   public AccountDaoEntity insert(AccountDaoEntity obj) {
-    AccountDaoEntity user = null;
+    AccountDaoEntity account = null;
 
     try (Connection connection = DbConnectionManager.getConnection()) {
       String number = createNumber();
@@ -90,19 +90,20 @@ public class DbAccountDao implements AccountDao<AccountDaoEntity, String> {
 
       preparedStatement.executeUpdate();
 
-      user = getById(number);
+      account = getById(number);
     } catch (SQLException e) {
       throw new RuntimeException(e);
     }
 
-    return user;
+    return account;
   }
 
   @Override
-  public List<AccountDaoEntity> findAll() {
+  public List<AccountDaoEntity> findAll(Integer limit, Integer offset) {
     List<AccountDaoEntity> accounts = new ArrayList<>();
     try (Connection connection = DbConnectionManager.getConnection()) {
-      ResultSet resultSet = connection.createStatement().executeQuery("SELECT * FROM ACCOUNTS");
+      ResultSet resultSet = connection.createStatement().executeQuery(
+          "SELECT * FROM ACCOUNTS LIMIT ? OFFSET ?");
 
       while (resultSet.next()) {
         accounts.add(mapRow(resultSet));
@@ -153,6 +154,7 @@ public class DbAccountDao implements AccountDao<AccountDaoEntity, String> {
     entity.setCurrency(resultSet.getString("currency"));
     entity.setUserId(resultSet.getString("user_id"));
     entity.setNumber(resultSet.getString("number"));
+    entity.setCreated(resultSet.getTimestamp("created").toLocalDateTime());
 
     return entity;
   }

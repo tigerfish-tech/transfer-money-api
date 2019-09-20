@@ -62,7 +62,12 @@ public class DefaultUserService implements UserService {
 
   @Override
   public List<User> findAll() {
-    return userDao.findAll().stream().map(User::valueOf).collect(Collectors.toList());
+    return findAll(Integer.MAX_VALUE, 0);
+  }
+
+  @Override
+  public List<User> findAll(Integer limit, Integer offset) {
+    return userDao.findAll(limit, offset).stream().map(User::valueOf).collect(Collectors.toList());
   }
 
   @Override

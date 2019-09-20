@@ -77,10 +77,15 @@ public class DbUserDao implements UserDao<UserDaoEntity, String> {
   }
 
   @Override
-  public List<UserDaoEntity> findAll() {
+  public List<UserDaoEntity> findAll(Integer limit, Integer offset) {
     List<UserDaoEntity> users = new ArrayList<>();
     try (Connection connection = DbConnectionManager.getConnection()) {
-      ResultSet resultSet = connection.createStatement().executeQuery("SELECT * FROM USERS");
+      PreparedStatement preparedStatement
+          = connection.prepareStatement("SELECT * FROM USERS LIMIT ? OFFSET ?");
+      preparedStatement.setInt(1, limit);
+      preparedStatement.setInt(2, offset);
+
+      ResultSet resultSet = preparedStatement.executeQuery();
 
       while (resultSet.next()) {
         users.add(mapRow(resultSet));
@@ -130,6 +135,7 @@ public class DbUserDao implements UserDao<UserDaoEntity, String> {
     UserDaoEntity entity = new UserDaoEntity();
     entity.setId(resultSet.getString("id"));
     entity.setFullName(resultSet.getString("full_name"));
+    entity.setCreated(resultSet.getTimestamp("created").toLocalDateTime());
 
     return entity;
   }
