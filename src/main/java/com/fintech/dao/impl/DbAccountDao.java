@@ -150,8 +150,8 @@ public class DbAccountDao implements AccountDao<AccountDaoEntity, String> {
 
   private AccountDaoEntity mapRow(ResultSet resultSet) throws SQLException {
     AccountDaoEntity entity = new AccountDaoEntity();
-    entity.setNumber(resultSet.getString("id"));
-    entity.setUserId(resultSet.getString("full_name"));
+    entity.setCurrency(resultSet.getString("currency"));
+    entity.setUserId(resultSet.getString("user_id"));
     entity.setNumber(resultSet.getString("number"));
 
     return entity;
@@ -162,7 +162,7 @@ public class DbAccountDao implements AccountDao<AccountDaoEntity, String> {
 
     String id;
     do {
-      long number = random.nextLong() + 100000000000L;
+      long number = Math.abs(random.nextLong()) + 100000000000L;
 
       id = "KZ" + number;
     } while (isExist(id));
