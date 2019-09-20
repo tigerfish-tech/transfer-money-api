@@ -15,7 +15,6 @@ import com.fintech.models.User;
 import com.fintech.models.dao.UserDaoEntity;
 import com.fintech.services.UserService;
 import com.fintech.services.impl.DefaultUserService;
-import java.security.InvalidParameterException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -83,7 +82,7 @@ public class UserServiceTests {
   }
 
   //Create/update user with empty name
-  @Test(expected = InvalidParameterException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void updateUserEmptyNameExceptionTest() {
     User user = User.builder().build();
     userService.save(user);
@@ -114,7 +113,12 @@ public class UserServiceTests {
 
   @Test(expected = IllegalArgumentException.class)
   public void getUserByIdFailedTest() {
-    userService.getById(UUID.randomUUID().toString());
+    String id = UUID.randomUUID().toString();
+
+    userService.getById(id);
+
+    given(userDao.isExist(id)).willReturn(false);
+
     verify(userDao, times(1)).isExist(any());
     verify(userDao, never()).getById(any());
   }
@@ -135,7 +139,7 @@ public class UserServiceTests {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void deleteUserByIdFailedTest() {
+  public void deleteUserByIdExceptionTest() {
     String id = UUID.randomUUID().toString();
     given(userDao.isExist(id)).willReturn(false);
 

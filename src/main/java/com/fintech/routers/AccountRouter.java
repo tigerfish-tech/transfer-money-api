@@ -1,36 +1,36 @@
 package com.fintech.routers;
 
+import com.fintech.models.Account;
 import com.fintech.models.ErrorResponse;
-import com.fintech.models.User;
-import com.fintech.services.UserService;
+import com.fintech.services.AccountService;
 import com.google.gson.Gson;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
 import java.nio.charset.Charset;
 import java.util.List;
 
-public class UserRouter {
+public class AccountRouter {
 
-  private UserService userService;
+  private AccountService accountService;
 
-  UserRouter(UserService userService) {
-    this.userService = userService;
+  public AccountRouter(AccountService accountService) {
+    this.accountService = accountService;
   }
 
-  void userInfo(HttpServerExchange exchange) {
+  void accountInfo(HttpServerExchange exchange) {
     exchange.getRequestReceiver().receiveFullBytes((exc, bytes) -> {
-      String userId = exc.getQueryParameters().get("userId").getFirst();
+      String number = exc.getQueryParameters().get("number").getFirst();
 
       final Gson gson = new Gson();
       try {
-        User user = userService.getById(userId);
+        Account account = accountService.getByNumber(number);
 
         exc.setStatusCode(200);
         exc.getResponseHeaders()
             .add(HttpString.tryFromString("Content-Type"), "application/json");
-        exc.getResponseSender().send(gson.toJson(user));
+        exc.getResponseSender().send(gson.toJson(account));
       } catch (IllegalArgumentException e) {
-        exc.setStatusCode(400);
+        exc.setStatusCode(404);
         exc.getResponseHeaders()
             .add(HttpString.tryFromString("Content-Type"), "application/json");
         exc.getResponseSender().send(gson.toJson(
@@ -42,17 +42,19 @@ public class UserRouter {
     });
   }
 
-  void createUser(HttpServerExchange exchange) {
+  void userAccounts(HttpServerExchange exchange) {
     exchange.getRequestReceiver().receiveFullBytes((exc, bytes) -> {
+      String userId = exc.getQueryParameters().get("userId").getFirst();
+
       final Gson gson = new Gson();
 
-      User user = gson.fromJson(new String(bytes, Charset.defaultCharset()), User.class);
       try {
-        User persistedUser = userService.save(user);
-        exc.setStatusCode(201);
+        List<Account> accounts = accountService.userAccounts(userId);
+
+        exc.setStatusCode(200);
         exc.getResponseHeaders()
             .add(HttpString.tryFromString("Content-Type"), "application/json");
-        exc.getResponseSender().send(gson.toJson(persistedUser));
+        exc.getResponseSender().send(gson.toJson(accounts));
       } catch (IllegalArgumentException e) {
         exc.setStatusCode(400);
         exc.getResponseHeaders()
@@ -65,28 +67,26 @@ public class UserRouter {
     });
   }
 
-  void updateUser(HttpServerExchange exchange) {
+  void createAccount(HttpServerExchange exchange) {
     exchange.getRequestReceiver().receiveFullBytes((exc, bytes) -> {
       String userId = exc.getQueryParameters().get("userId").getFirst();
 
       final Gson gson = new Gson();
-      User body = gson.fromJson(new String(bytes, Charset.defaultCharset()), User.class);
+      Account account = gson.fromJson(new String(bytes, Charset.defaultCharset()), Account.class);
+      try {
+        Account result = accountService.addAccountToUser(userId, account.getCurrency());
 
-      if (userService.exists(userId)) {
-        User update = User.builder().id(userId).fullName(body.getFullName()).build();
-
-        User persistedUser = userService.save(update);
         exc.setStatusCode(200);
         exc.getResponseHeaders()
             .add(HttpString.tryFromString("Content-Type"), "application/json");
-        exc.getResponseSender().send(gson.toJson(persistedUser));
-      } else {
+        exc.getResponseSender().send(gson.toJson(result));
+      } catch (IllegalArgumentException e) {
         exc.setStatusCode(400);
         exc.getResponseHeaders()
             .add(HttpString.tryFromString("Content-Type"), "application/json");
         exc.getResponseSender().send(gson.toJson(
             ErrorResponse.builder().code(400)
-                .message("User doesn't exist")
+                .message(e.getMessage())
                 .timestamp(System.currentTimeMillis()).build()));
       }
     });
@@ -94,26 +94,13 @@ public class UserRouter {
 
   void delete(HttpServerExchange exchange) {
     exchange.getRequestReceiver().receiveFullBytes((exc, bytes) -> {
-      String userId = exc.getQueryParameters().get("userId").getFirst();
+      String number = exc.getQueryParameters().get("number").getFirst();
       try {
-        userService.delete(userId);
+        accountService.delete(number);
         exc.setStatusCode(200);
       } catch (IllegalArgumentException e) {
         exc.setStatusCode(404);
       }
     });
   }
-
-  void list(HttpServerExchange exchange) {
-    exchange.getRequestReceiver().receiveFullBytes((exc, bytes) -> {
-      final Gson gson = new Gson();
-
-      List<User> users = userService.findAll();
-      exc.setStatusCode(200);
-      exc.getResponseHeaders()
-          .add(HttpString.tryFromString("Content-Type"), "application/json");
-      exc.getResponseSender().send(gson.toJson(users));
-    });
-  }
-
 }
