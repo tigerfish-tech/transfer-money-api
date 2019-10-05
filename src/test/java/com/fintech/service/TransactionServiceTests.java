@@ -202,6 +202,9 @@ public class TransactionServiceTests {
 
     given(accountService.exists(any())).willReturn(true);
     given(operationDao.accountBalance(from)).willReturn(BigDecimal.valueOf(10));
+    Account accFrom = Account.builder().number(from).currency("USD").build();
+    Account accTo = Account.builder().number(to).currency("USD").build();
+    given(accountService.getByNumber(any())).willReturn(accFrom).willReturn(accTo);
 
     TransferOperation operation = TransferOperation.builder()
         .accountFrom(from).accountTo(to).amount(amount).build();
@@ -222,7 +225,6 @@ public class TransactionServiceTests {
     BigDecimal amount = BigDecimal.valueOf(50);
 
     given(accountService.exists(any())).willReturn(true);
-    given(operationDao.accountBalance(from)).willReturn(BigDecimal.valueOf(100));
     Account accFrom = Account.builder().number(from).currency("USD").build();
     Account accTo = Account.builder().number(to).currency("EUR").build();
     given(accountService.getByNumber(any())).willReturn(accFrom).willReturn(accTo);
