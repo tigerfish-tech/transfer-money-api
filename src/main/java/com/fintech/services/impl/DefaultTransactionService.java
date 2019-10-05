@@ -31,7 +31,7 @@ public class DefaultTransactionService implements TransactionService {
 
   @Override
   public void cashIn(String account, BigDecimal amount) {
-    if (!isAccountExist(account)) {
+    if (!accountService.exists(account)) {
       throw new IllegalArgumentException("Account " + account + " doesn't exist");
     }
 
@@ -44,7 +44,7 @@ public class DefaultTransactionService implements TransactionService {
 
   @Override
   public void withdraw(String account, BigDecimal amount) {
-    if (!isAccountExist(account)) {
+    if (!accountService.exists(account)) {
       throw new IllegalArgumentException("Account " + account + " doesn't exist");
     }
     synchronized (account.intern()) {
@@ -62,7 +62,7 @@ public class DefaultTransactionService implements TransactionService {
 
   @Override
   public BigDecimal balance(String account) {
-    if (!isAccountExist(account)) {
+    if (!accountService.exists(account)) {
       throw new IllegalArgumentException("Account " + account + " doesn't exist");
     }
 
@@ -71,10 +71,10 @@ public class DefaultTransactionService implements TransactionService {
 
   @Override
   public void transfer(TransferOperation operation) {
-    if (!isAccountExist(operation.getAccountFrom())) {
+    if (!accountService.exists(operation.getAccountFrom())) {
       throw new IllegalArgumentException(
           "Account " + operation.getAccountFrom() + " doesn't exist");
-    } else if (!isAccountExist(operation.getAccountTo())) {
+    } else if (!accountService.exists(operation.getAccountTo())) {
       throw new IllegalArgumentException(
           "Account " + operation.getAccountTo() + " doesn't exist");
     } else if (operation.getAmount().compareTo(BigDecimal.ZERO) < 0) {
@@ -125,11 +125,7 @@ public class DefaultTransactionService implements TransactionService {
     }
   }
 
-  private boolean isAccountExist(String account) {
-    return accountService.exists(account);
-  }
-
-  private boolean isMoneyEnough(String account, BigDecimal amount) {
+  public boolean isMoneyEnough(String account, BigDecimal amount) {
     BigDecimal balance = operationDao.accountBalance(account);
 
     return balance.compareTo(amount) >= 0;
