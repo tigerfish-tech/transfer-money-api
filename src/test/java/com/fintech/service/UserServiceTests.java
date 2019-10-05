@@ -10,7 +10,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-
 import com.fintech.dao.UserDao;
 import com.fintech.models.User;
 import com.fintech.models.dao.UserDaoEntity;

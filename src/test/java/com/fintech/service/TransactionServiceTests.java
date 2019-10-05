@@ -11,17 +11,25 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-
 import com.fintech.dao.OperationDao;
 import com.fintech.dao.TransferDao;
 import com.fintech.models.Account;
 import com.fintech.models.TransferOperation;
+import com.fintech.models.TransferRepresentation;
 import com.fintech.models.dao.OperationDaoEntity;
 import com.fintech.models.dao.TransferDaoEntity;
 import com.fintech.services.AccountService;
 import com.fintech.services.impl.DefaultTransactionService;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -341,6 +349,79 @@ public class TransactionServiceTests {
     verify(accountService).exists(any());
   }
 
+  @Test
+  public void isMoneyEnoughTrueTest() {
+    String account = "12345";
+    BigDecimal amount = new BigDecimal(50);
+
+    doReturn(BigDecimal.valueOf(100)).when(operationDao).accountBalance(account);
+
+    Assert.assertTrue(transactionService.isMoneyEnough(account, amount));
+    verify(operationDao).accountBalance(any());
+  }
+
+  @Test
+  public void isMoneyEnoughFalseTest() {
+    String account = "12345";
+    BigDecimal amount = new BigDecimal(50);
+
+    doReturn(BigDecimal.valueOf(40)).when(operationDao).accountBalance(account);
+
+    Assert.assertFalse(transactionService.isMoneyEnough(account, amount));
+    verify(operationDao).accountBalance(any());
+  }
+
+  @Test
+  public void valueOf_TransferRepresentationTest() {
+    List<Long> operationIds = Collections.unmodifiableList(Arrays.asList(1L, 2L));
+
+    LocalDateTime dateTime = LocalDateTime.now();
+
+    TransferDaoEntity transferDaoEntity = new TransferDaoEntity();
+    transferDaoEntity.setId(100L);
+    transferDaoEntity.setCreated(dateTime);
+    transferDaoEntity.setOperations(operationIds);
+
+    BigDecimal amount = BigDecimal.valueOf(100);
+
+    String accountFrom = "12345";
+    OperationDaoEntity firstOperation = new OperationDaoEntity();
+    firstOperation.setId(1L);
+    firstOperation.setCredit(amount);
+    firstOperation.setAccountNumber(accountFrom);
+    firstOperation.setCreated(dateTime);
+    doReturn(firstOperation).when(operationDao).getById(eq(1L));
+
+    String accountTo = "67890";
+    OperationDaoEntity secondOperation = new OperationDaoEntity();
+    secondOperation.setId(2L);
+    secondOperation.setDebit(amount);
+    secondOperation.setAccountNumber(accountTo);
+    secondOperation.setCreated(dateTime);
+    doReturn(secondOperation).when(operationDao).getById(eq(2L));
+
+    TransferRepresentation transferRepresentation = transactionService.valueOf(transferDaoEntity);
+
+    Assert.assertEquals(dateTime, transferRepresentation.getCreated());
+    Assert.assertEquals(accountFrom, transferRepresentation.getAccountFrom());
+    Assert.assertEquals(accountTo, transferRepresentation.getAccountTo());
+    Assert.assertEquals(amount, transferRepresentation.getAmount());
+  }
+
+  @Test
+  public void findAllSuccessTest() {
+    List<TransferDaoEntity> transfers = transferList();
+
+    int limit = 10;
+    int offset = 0;
+
+    doReturn(transfers).when(transferDao).findAll(eq(limit), eq(offset));
+    doReturn(TransferRepresentation.builder().build()).when(transactionService).valueOf(any());
+
+    MatcherAssert.assertThat("Check user list",
+        transactionService.findAll(limit, offset), Matchers.hasSize(10));
+  }
+
   private OperationDaoEntity createOperation(Long id, String account,
                                              BigDecimal debit, BigDecimal credit) {
     OperationDaoEntity operationDaoEntity = new OperationDaoEntity();
@@ -350,6 +431,19 @@ public class TransactionServiceTests {
     operationDaoEntity.setCredit(credit);
 
     return operationDaoEntity;
+  }
+
+  private List<TransferDaoEntity> transferList() {
+    return LongStream.rangeClosed(0, 9).boxed().map(number -> {
+      TransferDaoEntity entity = new TransferDaoEntity();
+      entity.setId(number);
+      List<Long> operations = new ArrayList<>();
+      operations.add(number * 10 + 1);
+      operations.add(number * 10 + 2);
+      entity.setOperations(operations);
+
+      return entity;
+    }).collect(Collectors.toList());
   }
 
 }
