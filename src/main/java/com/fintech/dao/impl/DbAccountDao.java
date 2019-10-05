@@ -102,8 +102,11 @@ public class DbAccountDao implements AccountDao<AccountDaoEntity, String> {
   public List<AccountDaoEntity> findAll(Integer limit, Integer offset) {
     List<AccountDaoEntity> accounts = new ArrayList<>();
     try (Connection connection = DbConnectionManager.getConnection()) {
-      ResultSet resultSet = connection.createStatement().executeQuery(
-          "SELECT * FROM ACCOUNTS LIMIT ? OFFSET ?");
+      PreparedStatement preparedStatement
+          = connection.prepareStatement("SELECT * FROM ACCOUNTS LIMIT ? OFFSET ?");
+      preparedStatement.setInt(1, limit);
+      preparedStatement.setInt(2, offset);
+      ResultSet resultSet = preparedStatement.executeQuery();
 
       while (resultSet.next()) {
         accounts.add(mapRow(resultSet));

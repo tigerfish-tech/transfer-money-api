@@ -1,6 +1,7 @@
 package com.fintech.dao;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 
@@ -12,6 +13,7 @@ import java.sql.SQLException;
 import java.util.List;
 import org.hamcrest.MatcherAssert;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -38,6 +40,7 @@ public class AccountDaoTests {
     try (Connection connection = DbConnectionManager.getConnection()) {
       connection.createStatement()
           .executeUpdate("INSERT INTO USERS (id, full_name) VALUES ('123', 'TEST')");
+      createUserAccount(connection);
     }
   }
 
@@ -52,28 +55,24 @@ public class AccountDaoTests {
   }
 
   @Test
-  public void userAccountsTest() throws SQLException {
-    createUserAccount();
-
+  public void userAccountsTest() {
     List<AccountDaoEntity> accounts = accountDao.userAccounts("123");
 
     MatcherAssert.assertThat("Check account list", accounts, hasSize(2));
   }
 
   @Test
-  public void getByIdTest() throws SQLException {
-    createUserAccount();
-
+  public void getByIdTest() {
     AccountDaoEntity entity = accountDao.getById("USD123");
+    AccountDaoEntity nullEntity = accountDao.getById("123121321");
     MatcherAssert.assertThat("Check number", entity.getNumber(), is("USD123"));
     MatcherAssert.assertThat("Check user id", entity.getUserId(), is("123"));
     MatcherAssert.assertThat("Check currency", entity.getCurrency(), is("USD"));
+    MatcherAssert.assertThat("Check null value", nullEntity, nullValue());
   }
 
   @Test
-  public void updateTest() throws SQLException {
-    createUserAccount();
-
+  public void updateTest() {
     String newCurrency = "EUR";
 
     AccountDaoEntity entity = accountDao.getById("USD123");
@@ -104,15 +103,48 @@ public class AccountDaoTests {
     MatcherAssert.assertThat("Check currency", accountDaoEntity.getCurrency(), is("EUR"));
   }
 
-  private void createUserAccount() throws SQLException {
-    try (Connection connection = DbConnectionManager.getConnection()) {
-      connection.createStatement()
-          .executeUpdate(
-              "INSERT INTO ACCOUNTS (number, user_id, currency) VALUES ('USD123', '123', 'USD')");
-      connection.createStatement()
-          .executeUpdate(
-              "INSERT INTO ACCOUNTS (number, user_id, currency) VALUES ('USD456', '123', 'USD')");
-    }
+  @Test
+  public void findAllTest() {
+    List<AccountDaoEntity> accounts1 = accountDao.findAll(1, 0);
+    List<AccountDaoEntity> accounts2 = accountDao.findAll(10, 0);
+
+    MatcherAssert.assertThat("Check account list", accounts1, hasSize(1));
+    MatcherAssert.assertThat("Check account list", accounts2, hasSize(2));
+  }
+
+  @Test
+  public void deleteByIdTest() {
+    AccountDaoEntity entity = accountDao.getById("USD123");
+    accountDao.deleteById("USD123");
+    AccountDaoEntity nullEntity = accountDao.getById("USD123");
+
+    MatcherAssert.assertThat("Check account before", entity, notNullValue());
+    MatcherAssert.assertThat("Check account after", nullEntity, nullValue());
+  }
+
+  @Test
+  public void deleteTest() {
+    AccountDaoEntity entity = accountDao.getById("USD123");
+    accountDao.delete(entity);
+    AccountDaoEntity nullEntity = accountDao.getById("USD123");
+
+    MatcherAssert.assertThat("Check account before", entity, notNullValue());
+    MatcherAssert.assertThat("Check account after", nullEntity, nullValue());
+  }
+
+  @Test
+  public void isExistTest() {
+    Assert.assertTrue(accountDao.isExist("USD123"));
+    Assert.assertFalse(accountDao.isExist("fdsfdsfdsfds"));
+  }
+
+  private void createUserAccount(Connection connection) throws SQLException {
+    connection.createStatement()
+        .executeUpdate(
+            "INSERT INTO ACCOUNTS (number, user_id, currency) VALUES ('USD123', '123', 'USD')");
+    connection.createStatement()
+        .executeUpdate(
+            "INSERT INTO ACCOUNTS (number, user_id, currency) VALUES ('USD456', '123', 'USD')");
   }
 
 }
