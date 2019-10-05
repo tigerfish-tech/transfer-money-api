@@ -31,7 +31,7 @@ public class DefaultTransactionService implements TransactionService {
 
   @Override
   public void cashIn(String account, BigDecimal amount) {
-    if (!isAccountExist(account)) {
+    if (!accountService.exists(account)) {
       throw new IllegalArgumentException("Account " + account + " doesn't exist");
     }
 
@@ -44,23 +44,25 @@ public class DefaultTransactionService implements TransactionService {
 
   @Override
   public void withdraw(String account, BigDecimal amount) {
-    if (!isAccountExist(account)) {
+    if (!accountService.exists(account)) {
       throw new IllegalArgumentException("Account " + account + " doesn't exist");
     }
-    if (!isMoneyEnough(account, amount)) {
-      throw new IllegalArgumentException("There is no enough money");
+    synchronized (account.intern()) {
+      if (!isMoneyEnough(account, amount)) {
+        throw new IllegalArgumentException("There is no enough money");
+      }
+
+      OperationDaoEntity operationDaoEntity = new OperationDaoEntity();
+      operationDaoEntity.setAccountNumber(account);
+      operationDaoEntity.setCredit(amount);
+
+      operationDao.insert(operationDaoEntity);
     }
-
-    OperationDaoEntity operationDaoEntity = new OperationDaoEntity();
-    operationDaoEntity.setAccountNumber(account);
-    operationDaoEntity.setCredit(amount);
-
-    operationDao.insert(operationDaoEntity);
   }
 
   @Override
   public BigDecimal balance(String account) {
-    if (!isAccountExist(account)) {
+    if (!accountService.exists(account)) {
       throw new IllegalArgumentException("Account " + account + " doesn't exist");
     }
 
@@ -69,17 +71,17 @@ public class DefaultTransactionService implements TransactionService {
 
   @Override
   public void transfer(TransferOperation operation) {
-    if (!isAccountExist(operation.getAccountFrom())) {
+    if (!accountService.exists(operation.getAccountFrom())) {
       throw new IllegalArgumentException(
           "Account " + operation.getAccountFrom() + " doesn't exist");
-    }
-    if (!isAccountExist(operation.getAccountTo())) {
+    } else if (!accountService.exists(operation.getAccountTo())) {
       throw new IllegalArgumentException(
           "Account " + operation.getAccountTo() + " doesn't exist");
+    } else if (operation.getAmount().compareTo(BigDecimal.ZERO) < 0) {
+      throw new IllegalArgumentException(
+          "Wrong amount " + operation.getAmount());
     }
-    if (!isMoneyEnough(operation.getAccountFrom(), operation.getAmount())) {
-      throw new IllegalArgumentException("There is no enough money");
-    }
+
     Account accountFrom = accountService.getByNumber(operation.getAccountFrom());
     Account accountTo = accountService.getByNumber(operation.getAccountTo());
 
@@ -87,17 +89,23 @@ public class DefaultTransactionService implements TransactionService {
       throw new IllegalArgumentException("Accounts with different currencies");
     }
 
-    OperationDaoEntity from = operationDao.insert(
-        createOperation(operation.getAccountFrom(), null, operation.getAmount()));
-    OperationDaoEntity to = operationDao.insert(
-        createOperation(operation.getAccountTo(), operation.getAmount(), null));
+    synchronized (operation.getAccountFrom().intern()) {
+      if (!isMoneyEnough(operation.getAccountFrom(), operation.getAmount())) {
+        throw new IllegalArgumentException("There is no enough money");
+      }
 
-    List<Long> operations = Arrays.asList(from.getId(), to.getId());
+      OperationDaoEntity from = operationDao.insert(
+          createOperation(operation.getAccountFrom(), null, operation.getAmount()));
+      OperationDaoEntity to = operationDao.insert(
+          createOperation(operation.getAccountTo(), operation.getAmount(), null));
 
-    TransferDaoEntity transferDaoEntity = new TransferDaoEntity();
-    transferDaoEntity.setOperations(operations);
+      List<Long> operations = Arrays.asList(from.getId(), to.getId());
 
-    transferDao.insert(transferDaoEntity);
+      TransferDaoEntity transferDaoEntity = new TransferDaoEntity();
+      transferDaoEntity.setOperations(operations);
+
+      transferDao.insert(transferDaoEntity);
+    }
   }
 
   @Override
@@ -108,18 +116,16 @@ public class DefaultTransactionService implements TransactionService {
 
   @Override
   public void delete(Long id) {
-    if (!transferDao.isExist(id)) {
-      throw new IllegalArgumentException("Transfer " + id + " doesn't exist");
+    synchronized (id) {
+      if (!transferDao.isExist(id)) {
+        throw new IllegalArgumentException("Transfer " + id + " doesn't exist");
+      }
+
+      transferDao.deleteById(id);
     }
-
-    transferDao.deleteById(id);
   }
 
-  private boolean isAccountExist(String account) {
-    return accountService.exists(account);
-  }
-
-  private boolean isMoneyEnough(String account, BigDecimal amount) {
+  public boolean isMoneyEnough(String account, BigDecimal amount) {
     BigDecimal balance = operationDao.accountBalance(account);
 
     return balance.compareTo(amount) >= 0;
@@ -134,7 +140,7 @@ public class DefaultTransactionService implements TransactionService {
     return entity;
   }
 
-  private TransferRepresentation valueOf(TransferDaoEntity transferDaoEntity) {
+  public TransferRepresentation valueOf(TransferDaoEntity transferDaoEntity) {
     OperationDaoEntity operationDaoEntity1
         = operationDao.getById(transferDaoEntity.getOperations().get(0));
     OperationDaoEntity operationDaoEntity2

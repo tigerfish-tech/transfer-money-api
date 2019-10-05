@@ -10,6 +10,7 @@ import com.google.gson.GsonBuilder;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -61,12 +62,11 @@ public class TransactionRouter {
 
   void transfer(HttpServerExchange exchange) {
     exchange.getRequestReceiver().receiveFullBytes((exc, bytes) -> {
-      String from = exc.getQueryParameters().get("from").getFirst();
-      String to = exc.getQueryParameters().get("to").getFirst();
-      double amount = Double.parseDouble(exc.getQueryParameters().get("amount").getFirst());
+      Gson gson = new Gson();
+
+      TransferOperation operation
+          = gson.fromJson(new String(bytes, Charset.defaultCharset()), TransferOperation.class);
       try {
-        TransferOperation operation = TransferOperation.builder()
-            .accountFrom(from).accountTo(to).amount(BigDecimal.valueOf(amount)).build();
         transactionService.transfer(operation);
 
         exc.setStatusCode(200);

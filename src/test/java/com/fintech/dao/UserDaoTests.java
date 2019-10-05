@@ -74,8 +74,15 @@ public class UserDaoTests {
   }
 
   @Test
-  public void userDeleteByIdTest() {
+  public void userDeleteByIdSuccessTest() {
     userDao.deleteById("123");
+  }
+
+  @Test
+  public void userDeleteTest() {
+    UserDaoEntity user = userDao.getById("123");
+
+    userDao.delete(user);
   }
 
   @Test
