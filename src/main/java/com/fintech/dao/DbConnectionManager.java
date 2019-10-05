@@ -33,7 +33,11 @@ public class DbConnectionManager {
     flyway.migrate();
   }
 
-  public static Connection getConnection() throws SQLException {
-    return ds.getConnection();
+  public static Connection getConnection() {
+    try {
+      return ds.getConnection();
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

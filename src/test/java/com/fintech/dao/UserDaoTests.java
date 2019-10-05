@@ -47,7 +47,7 @@ public class UserDaoTests {
   public void afterTest() throws SQLException {
     try (Connection connection = DbConnectionManager.getConnection()) {
       connection.createStatement()
-          .executeUpdate("DELETE USERS WHERE id is not null");
+          .executeUpdate("DELETE FROM USERS WHERE id is not null");
     }
   }
 
