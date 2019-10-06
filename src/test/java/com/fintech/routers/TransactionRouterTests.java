@@ -25,7 +25,6 @@ import com.fintech.services.impl.DefaultUserService;
 import com.fintech.testutils.DbUtils;
 import com.fintech.testutils.DefaultUndertowServer;
 import com.fintech.testutils.HttpUtils;
-import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 import io.undertow.util.StatusCodes;
 import java.io.IOException;
@@ -199,9 +198,7 @@ public class TransactionRouterTests {
 
       Assert.assertEquals(StatusCodes.OK, transfersResult.getStatusLine().getStatusCode());
 
-      String transfersJson = HttpUtils.readBodyAsString(transfersResult.getEntity());
-
-      Object[] objects = new Gson().fromJson(transfersJson, Object[].class);
+      Object[] objects = HttpUtils.readBody(transfersResult.getEntity(), Object[].class);
 
       assertThat(objects, arrayWithSize(1));
 
