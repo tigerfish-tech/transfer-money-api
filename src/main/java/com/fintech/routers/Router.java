@@ -42,7 +42,7 @@ public enum Router {
   private TransactionRouter transactionRouter = new TransactionRouter(transactionService);
 
   private final RoutingHandler handler = new RoutingHandler()
-      .addAll(userRouter.userRoutingHandler())
+      .addAll(userRouter.handler())
       .addAll(accountRouter.handler())
       .addAll(transferRoutingHandler())
       .setFallbackHandler(exchange -> {

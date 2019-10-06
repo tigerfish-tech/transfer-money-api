@@ -7,16 +7,13 @@ import com.fintech.models.User;
 import com.fintech.models.dao.UserDaoEntity;
 import com.fintech.services.UserService;
 import com.fintech.services.impl.DefaultUserService;
-import com.google.gson.Gson;
-import com.zaxxer.hikari.HikariConfig;
-import io.undertow.Undertow;
+import com.fintech.testutils.DbUtils;
+import com.fintech.testutils.DefaultUndertowServer;
+import com.fintech.testutils.HttpUtils;
 import io.undertow.util.StatusCodes;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.SQLException;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -27,6 +24,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -37,24 +35,23 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class UserRouterTests {
 
+  private static DefaultUndertowServer server;
+
   @BeforeClass
   public static void initClass() {
-    HikariConfig config = new HikariConfig();
-    config.setJdbcUrl("jdbc:h2:mem:test");
-    config.setUsername("sa");
-    config.setPassword("sa");
-
-    DbConnectionManager.setConfig(config);
-    DbConnectionManager.create();
+    DbUtils.initDb();
 
     UserDao<UserDaoEntity, String> userDao = new DbUserDao();
     UserService userService = new DefaultUserService(userDao);
     UserRouter userRouter = new UserRouter(userService);
 
-    Undertow server = Undertow.builder()
-        .addHttpListener(9000, "127.0.0.1")
-        .setHandler(userRouter.handler()).build();
-    server.start();
+    server = DefaultUndertowServer.createServer(userRouter.handler());
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    server.stop();
+    DbUtils.close();
   }
 
   @Before
@@ -81,12 +78,12 @@ public class UserRouterTests {
   public void userInfo_SuccessTest() throws IOException {
     try (CloseableHttpClient httpClient = HttpClients.createMinimal()) {
 
-      HttpGet get = new HttpGet("http://127.0.0.1:9000/users/123");
+      HttpGet get = new HttpGet(server.getUrl() + "/users/123");
       HttpResponse result = httpClient.execute(get);
 
       Assert.assertEquals(StatusCodes.OK, result.getStatusLine().getStatusCode());
       Assert.assertEquals("{\"id\":\"123\",\"fullName\":\"TEST1\"}",
-          readBody(result.getEntity()));
+          HttpUtils.readBodyAsString(result.getEntity()));
     }
   }
 
@@ -94,7 +91,7 @@ public class UserRouterTests {
   public void userInfo_NotFoundTest() throws IOException {
     try (CloseableHttpClient httpClient = HttpClients.createMinimal()) {
 
-      HttpGet get = new HttpGet("http://127.0.0.1:9000/users/1234");
+      HttpGet get = new HttpGet(server.getUrl() + "/users/1234");
       HttpResponse result = httpClient.execute(get);
 
       Assert.assertEquals(StatusCodes.NOT_FOUND, result.getStatusLine().getStatusCode());
@@ -104,50 +101,49 @@ public class UserRouterTests {
   @Test
   public void userList_SuccessTest() throws IOException {
     try (CloseableHttpClient httpClient = HttpClients.createMinimal()) {
-      String JSON_FULL_LIST = "[{\"id\":\"123\",\"fullName\":\"TEST1\"},"
+      String jsonFullList = "[{\"id\":\"123\",\"fullName\":\"TEST1\"},"
           + "{\"id\":\"456\",\"fullName\":\"TEST2\"},{\"id\":\"789\",\"fullName\":\"TEST3\"}]";
 
-      HttpGet get1 = new HttpGet("http://127.0.0.1:9000/users");
+      HttpGet get1 = new HttpGet(server.getUrl() + "/users");
       HttpResponse result1 = httpClient.execute(get1);
 
       Assert.assertEquals(StatusCodes.OK, result1.getStatusLine().getStatusCode());
-      Assert.assertEquals(JSON_FULL_LIST, readBody(result1.getEntity()));
+      Assert.assertEquals(jsonFullList, HttpUtils.readBodyAsString(result1.getEntity()));
 
-      String JSON_LIMIT_LIST = "[{\"id\":\"123\",\"fullName\":\"TEST1\"},"
+      String jsonLimitList = "[{\"id\":\"123\",\"fullName\":\"TEST1\"},"
           + "{\"id\":\"456\",\"fullName\":\"TEST2\"}]";
 
-      HttpGet get2 = new HttpGet("http://127.0.0.1:9000/users?limit=2");
+      HttpGet get2 = new HttpGet(server.getUrl() + "/users?limit=2");
       HttpResponse result2 = httpClient.execute(get2);
 
       Assert.assertEquals(StatusCodes.OK, result2.getStatusLine().getStatusCode());
-      Assert.assertEquals(JSON_LIMIT_LIST, readBody(result2.getEntity()));
+      Assert.assertEquals(jsonLimitList, HttpUtils.readBodyAsString(result2.getEntity()));
 
-      String JSON_OFFSET_LIST
+      String jsonOffsetList
           = "[{\"id\":\"456\",\"fullName\":\"TEST2\"},{\"id\":\"789\",\"fullName\":\"TEST3\"}]";
 
-      HttpGet get3 = new HttpGet("http://127.0.0.1:9000/users?offset=1");
+      HttpGet get3 = new HttpGet(server.getUrl() + "/users?offset=1");
       HttpResponse result3 = httpClient.execute(get3);
 
       Assert.assertEquals(StatusCodes.OK, result3.getStatusLine().getStatusCode());
-      Assert.assertEquals(JSON_OFFSET_LIST, readBody(result3.getEntity()));
+      Assert.assertEquals(jsonOffsetList, HttpUtils.readBodyAsString(result3.getEntity()));
     }
   }
 
   @Test
   public void userCreate_SuccessTest() throws IOException {
     try (CloseableHttpClient httpClient = HttpClients.createMinimal()) {
-      String JSON_STRING = "{\"fullName\": \"John Smith\"}";
+      String jsonString = "{\"fullName\": \"John Smith\"}";
 
       StringEntity requestEntity = new StringEntity(
-          JSON_STRING,
+          jsonString,
           ContentType.APPLICATION_JSON);
 
-      HttpPost post = new HttpPost("http://127.0.0.1:9000/users");
+      HttpPost post = new HttpPost(server.getUrl() + "/users");
       post.setEntity(requestEntity);
       HttpResponse result = httpClient.execute(post);
 
-      Gson gson = new Gson();
-      User user = gson.fromJson(readBody(result.getEntity()), User.class);
+      User user = HttpUtils.readBody(result.getEntity(), User.class);
 
       Assert.assertEquals(StatusCodes.CREATED, result.getStatusLine().getStatusCode());
       Assert.assertEquals("John Smith", user.getFullName());
@@ -157,18 +153,15 @@ public class UserRouterTests {
   @Test
   public void userCreate_EmptyFullnameTest() throws IOException {
     try (CloseableHttpClient httpClient = HttpClients.createMinimal()) {
-      String JSON_STRING = "{\"fullName\": \"\"}";
+      String jsonString = "{\"fullName\": \"\"}";
 
       StringEntity requestEntity = new StringEntity(
-          JSON_STRING,
+          jsonString,
           ContentType.APPLICATION_JSON);
 
-      HttpPost post = new HttpPost("http://127.0.0.1:9000/users");
+      HttpPost post = new HttpPost(server.getUrl() + "/users");
       post.setEntity(requestEntity);
       HttpResponse result = httpClient.execute(post);
-
-      Gson gson = new Gson();
-      User user = gson.fromJson(readBody(result.getEntity()), User.class);
 
       Assert.assertEquals(StatusCodes.BAD_REQUEST, result.getStatusLine().getStatusCode());
     }
@@ -177,17 +170,16 @@ public class UserRouterTests {
   @Test
   public void userUpdate_SuccessTest() throws IOException {
     try (CloseableHttpClient httpClient = HttpClients.createMinimal()) {
-      String JSON_STRING = "{\"fullName\": \"John Smith\"}";
+      String jsonString = "{\"fullName\": \"John Smith\"}";
 
       StringEntity requestEntity = new StringEntity(
-          JSON_STRING,
+          jsonString,
           ContentType.APPLICATION_JSON);
-      HttpPut post = new HttpPut("http://127.0.0.1:9000/users/123");
+      HttpPut post = new HttpPut(server.getUrl() + "/users/123");
       post.setEntity(requestEntity);
       HttpResponse result = httpClient.execute(post);
 
-      Gson gson = new Gson();
-      User user = gson.fromJson(readBody(result.getEntity()), User.class);
+      User user = HttpUtils.readBody(result.getEntity(), User.class);
 
       Assert.assertEquals(StatusCodes.OK, result.getStatusLine().getStatusCode());
       Assert.assertEquals("123", user.getId());
@@ -198,12 +190,12 @@ public class UserRouterTests {
   @Test
   public void userUpdate_UserDoesntExistTest() throws IOException {
     try (CloseableHttpClient httpClient = HttpClients.createMinimal()) {
-      String JSON_STRING = "{\"fullName\": \"John Smith\"}";
+      String jsonString = "{\"fullName\": \"John Smith\"}";
 
       StringEntity requestEntity = new StringEntity(
-          JSON_STRING,
+          jsonString,
           ContentType.APPLICATION_JSON);
-      HttpPut post = new HttpPut("http://127.0.0.1:9000/users/1234");
+      HttpPut post = new HttpPut(server.getUrl() + "/users/1234");
       post.setEntity(requestEntity);
       HttpResponse result = httpClient.execute(post);
 
@@ -214,7 +206,7 @@ public class UserRouterTests {
   @Test
   public void userDeleteTest() throws IOException {
     try (CloseableHttpClient httpClient = HttpClients.createMinimal()) {
-      HttpDelete post = new HttpDelete("http://127.0.0.1:9000/users/123");
+      HttpDelete post = new HttpDelete(server.getUrl() + "/users/123");
       HttpResponse result1 = httpClient.execute(post);
 
       Assert.assertEquals(StatusCodes.OK, result1.getStatusLine().getStatusCode());
@@ -223,12 +215,6 @@ public class UserRouterTests {
 
       Assert.assertEquals(StatusCodes.NOT_FOUND, result2.getStatusLine().getStatusCode());
     }
-  }
-
-  private String readBody(HttpEntity httpEntity) throws IOException {
-    BufferedReader reader = new BufferedReader(new InputStreamReader(httpEntity.getContent()));
-
-    return reader.readLine();
   }
 
 }
