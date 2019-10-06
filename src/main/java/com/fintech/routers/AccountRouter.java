@@ -5,11 +5,12 @@ import com.fintech.models.ErrorResponse;
 import com.fintech.services.AccountService;
 import com.google.gson.Gson;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.server.RoutingHandler;
 import io.undertow.util.HttpString;
 import java.nio.charset.Charset;
 import java.util.List;
 
-public class AccountRouter {
+public class AccountRouter implements RoutingHandlerFactory {
 
   private AccountService accountService;
 
@@ -102,5 +103,14 @@ public class AccountRouter {
         exc.setStatusCode(404);
       }
     });
+  }
+
+  @Override
+  public RoutingHandler handler() {
+    return new RoutingHandler()
+        .get("/accounts/{number}", this::accountInfo)
+        .post("/users/{userId}/accounts", this::createAccount)
+        .get("/users/{userId}/accounts", this::userAccounts)
+        .delete("/accounts/{number}", this::delete);
   }
 }
