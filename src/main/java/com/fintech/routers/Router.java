@@ -44,7 +44,7 @@ public enum Router {
   private final RoutingHandler handler = new RoutingHandler()
       .addAll(userRouter.handler())
       .addAll(accountRouter.handler())
-      .addAll(transferRoutingHandler())
+      .addAll(transactionRouter.handler())
       .setFallbackHandler(exchange -> {
         Gson gson = new Gson();
         exchange.setStatusCode(400);
@@ -68,16 +68,6 @@ public enum Router {
 
   public static Router getInstance() {
     return INSTANCE;
-  }
-
-  private RoutingHandler transferRoutingHandler() {
-    return new RoutingHandler()
-        .post("/accounts/{number}/cash-in", transactionRouter::cashIn)
-        .post("/accounts/{number}/withdraw", transactionRouter::withdraw)
-        .get("/accounts/{number}/balance", transactionRouter::balance)
-        .post("/transfers", transactionRouter::transfer)
-        .get("/transfers", transactionRouter::list)
-        .delete("/transfers/{transferId}", transactionRouter::delete);
   }
 
   public RoutingHandler routingHandler() {
