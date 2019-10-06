@@ -63,7 +63,7 @@ public class DefaultAccountService implements AccountService {
   @Override
   public List<Account> userAccounts(String userId) {
     if (!userService.exists(userId)) {
-      throw new IllegalArgumentException("User " + userId + "doesn't exist");
+      throw new IllegalArgumentException("User " + userId + " doesn't exist");
     }
 
     return accountDao.userAccounts(userId).stream()

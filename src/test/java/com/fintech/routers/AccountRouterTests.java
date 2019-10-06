@@ -6,6 +6,7 @@ import com.fintech.dao.UserDao;
 import com.fintech.dao.impl.DbAccountDao;
 import com.fintech.dao.impl.DbUserDao;
 import com.fintech.models.Account;
+import com.fintech.models.ErrorResponse;
 import com.fintech.models.dao.AccountDaoEntity;
 import com.fintech.models.dao.UserDaoEntity;
 import com.fintech.services.AccountService;
@@ -99,7 +100,10 @@ public class AccountRouterTests {
 
       HttpGet getNotExisting = new HttpGet(server.getUrl() + "/accounts/USD125");
       HttpResponse result2 = httpClient.execute(getNotExisting);
+      ErrorResponse errorResponse = HttpUtils.readBody(result2.getEntity(), ErrorResponse.class);
       Assert.assertEquals(StatusCodes.NOT_FOUND, result2.getStatusLine().getStatusCode());
+      Assert.assertEquals(404, errorResponse.getCode());
+      Assert.assertEquals("Account USD125 doesn't exists", errorResponse.getMessage());
     }
   }
 
@@ -118,7 +122,10 @@ public class AccountRouterTests {
 
       HttpGet getNotExisting = new HttpGet(server.getUrl() + "/users/125/accounts");
       HttpResponse result2 = httpClient.execute(getNotExisting);
+      ErrorResponse errorResponse = HttpUtils.readBody(result2.getEntity(), ErrorResponse.class);
       Assert.assertEquals(StatusCodes.BAD_REQUEST, result2.getStatusLine().getStatusCode());
+      Assert.assertEquals(400, errorResponse.getCode());
+      Assert.assertEquals("User 125 doesn't exist", errorResponse.getMessage());
     }
   }
 

@@ -35,7 +35,7 @@ public class AccountRouter implements RoutingHandlerFactory {
         exc.getResponseHeaders()
             .add(HttpString.tryFromString("Content-Type"), "application/json");
         exc.getResponseSender().send(gson.toJson(
-            ErrorResponse.builder().code(400)
+            ErrorResponse.builder().code(404)
                 .message(e.getMessage())
                 .timestamp(System.currentTimeMillis()).build()));
       }
