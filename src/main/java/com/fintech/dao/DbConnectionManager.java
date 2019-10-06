@@ -33,6 +33,12 @@ public class DbConnectionManager {
     flyway.migrate();
   }
 
+  public static void close() {
+    if (ds.isRunning()) {
+      ds.close();
+    }
+  }
+
   public static Connection getConnection() {
     try {
       return ds.getConnection();

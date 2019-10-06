@@ -1,5 +1,6 @@
 package com.fintech.routers;
 
+import com.fintech.models.AccountOperation;
 import com.fintech.models.ErrorResponse;
 import com.fintech.models.TransferOperation;
 import com.fintech.models.TransferRepresentation;
@@ -8,13 +9,13 @@ import com.fintech.utils.LocalDateTimeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.server.RoutingHandler;
 import io.undertow.util.HttpString;
-import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class TransactionRouter {
+public class TransactionRouter implements RoutingHandlerFactory {
 
   private TransactionService transactionService;
 
@@ -25,9 +26,11 @@ public class TransactionRouter {
   void cashIn(HttpServerExchange exchange) {
     exchange.getRequestReceiver().receiveFullBytes((exc, bytes) -> {
       String number = exc.getQueryParameters().get("number").getFirst();
-      double amount = Double.parseDouble(exc.getQueryParameters().get("amount").getFirst());
+      AccountOperation operation
+          = new Gson().fromJson(
+          new String(bytes, Charset.defaultCharset()), AccountOperation.class);
       try {
-        transactionService.cashIn(number, BigDecimal.valueOf(amount));
+        transactionService.cashIn(number, operation.getAmount());
         exc.setStatusCode(200);
       } catch (IllegalArgumentException e) {
         createErrorResponse(exc, e);
@@ -38,9 +41,11 @@ public class TransactionRouter {
   void withdraw(HttpServerExchange exchange) {
     exchange.getRequestReceiver().receiveFullBytes((exc, bytes) -> {
       String number = exc.getQueryParameters().get("number").getFirst();
-      double amount = Double.parseDouble(exc.getQueryParameters().get("amount").getFirst());
+      AccountOperation operation
+          = new Gson().fromJson(
+          new String(bytes, Charset.defaultCharset()), AccountOperation.class);
       try {
-        transactionService.withdraw(number, BigDecimal.valueOf(amount));
+        transactionService.withdraw(number, operation.getAmount());
         exc.setStatusCode(200);
       } catch (IllegalArgumentException e) {
         createErrorResponse(exc, e);
@@ -93,7 +98,6 @@ public class TransactionRouter {
       exc.getResponseHeaders()
           .add(HttpString.tryFromString("Content-Type"), "application/json");
       final Gson gson = new GsonBuilder()
-          .setPrettyPrinting()
           .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter()).create();
       exc.getResponseSender().send(gson.toJson(transferRepresentations));
     });
@@ -122,5 +126,17 @@ public class TransactionRouter {
             .message(e.getMessage())
             .timestamp(System.currentTimeMillis()).build()));
   }
+
+  @Override
+  public RoutingHandler handler() {
+    return new RoutingHandler()
+        .post("/accounts/{number}/cash-in", this::cashIn)
+        .post("/accounts/{number}/withdraw", this::withdraw)
+        .get("/accounts/{number}/balance", this::balance)
+        .post("/transfers", this::transfer)
+        .get("/transfers", this::list)
+        .delete("/transfers/{transferId}", this::delete);
+  }
+
 
 }

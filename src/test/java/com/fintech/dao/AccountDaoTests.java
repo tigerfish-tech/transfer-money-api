@@ -7,12 +7,13 @@ import static org.hamcrest.Matchers.notNullValue;
 
 import com.fintech.dao.impl.DbAccountDao;
 import com.fintech.models.dao.AccountDaoEntity;
-import com.zaxxer.hikari.HikariConfig;
+import com.fintech.testutils.DbUtils;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import org.hamcrest.MatcherAssert;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -23,18 +24,17 @@ public class AccountDaoTests {
   private AccountDao<AccountDaoEntity, String> accountDao;
 
   @BeforeClass
-  public static void init() {
-    HikariConfig config = new HikariConfig();
-    config.setJdbcUrl("jdbc:h2:mem:test");
-    config.setUsername("sa");
-    config.setPassword("sa");
+  public static void initClass() {
+    DbUtils.initDb();
+  }
 
-    DbConnectionManager.setConfig(config);
-    DbConnectionManager.create();
+  @AfterClass
+  public static void afterClass() {
+    DbUtils.close();
   }
 
   @Before
-  public void initTest() throws SQLException {
+  public void setUp() throws SQLException {
     accountDao = new DbAccountDao();
 
     try (Connection connection = DbConnectionManager.getConnection()) {

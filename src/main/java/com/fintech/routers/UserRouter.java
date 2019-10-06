@@ -5,16 +5,26 @@ import com.fintech.models.User;
 import com.fintech.services.UserService;
 import com.google.gson.Gson;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.server.RoutingHandler;
 import io.undertow.util.HttpString;
 import java.nio.charset.Charset;
 import java.util.List;
 
-public class UserRouter {
+public class UserRouter implements RoutingHandlerFactory {
 
   private UserService userService;
 
   UserRouter(UserService userService) {
     this.userService = userService;
+  }
+
+  public RoutingHandler handler() {
+    return new RoutingHandler()
+        .get("/users", this::list)
+        .get("/users/{userId}", this::userInfo)
+        .post("/users", this::createUser)
+        .put("/users/{userId}", this::updateUser)
+        .delete("/users/{userId}", this::delete);
   }
 
   void userInfo(HttpServerExchange exchange) {
@@ -30,11 +40,11 @@ public class UserRouter {
             .add(HttpString.tryFromString("Content-Type"), "application/json");
         exc.getResponseSender().send(gson.toJson(user));
       } catch (IllegalArgumentException e) {
-        exc.setStatusCode(400);
+        exc.setStatusCode(404);
         exc.getResponseHeaders()
             .add(HttpString.tryFromString("Content-Type"), "application/json");
         exc.getResponseSender().send(gson.toJson(
-            ErrorResponse.builder().code(400)
+            ErrorResponse.builder().code(404)
                 .message(e.getMessage())
                 .timestamp(System.currentTimeMillis()).build()));
       }
