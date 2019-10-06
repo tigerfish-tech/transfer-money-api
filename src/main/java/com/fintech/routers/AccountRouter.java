@@ -77,7 +77,7 @@ public class AccountRouter implements RoutingHandlerFactory {
       try {
         Account result = accountService.addAccountToUser(userId, account.getCurrency());
 
-        exc.setStatusCode(200);
+        exc.setStatusCode(201);
         exc.getResponseHeaders()
             .add(HttpString.tryFromString("Content-Type"), "application/json");
         exc.getResponseSender().send(gson.toJson(result));

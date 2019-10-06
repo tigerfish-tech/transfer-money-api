@@ -78,12 +78,13 @@ public class UserRouterTests {
   public void userInfo_SuccessTest() throws IOException {
     try (CloseableHttpClient httpClient = HttpClients.createMinimal()) {
 
+      String jsonString = "{\"id\":\"123\",\"fullName\":\"TEST1\"}";
+
       HttpGet get = new HttpGet(server.getUrl() + "/users/123");
       HttpResponse result = httpClient.execute(get);
 
       Assert.assertEquals(StatusCodes.OK, result.getStatusLine().getStatusCode());
-      Assert.assertEquals("{\"id\":\"123\",\"fullName\":\"TEST1\"}",
-          HttpUtils.readBodyAsString(result.getEntity()));
+      Assert.assertEquals(jsonString, HttpUtils.readBodyAsString(result.getEntity()));
     }
   }
 
