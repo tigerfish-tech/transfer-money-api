@@ -64,25 +64,7 @@ public class DbOperationDao implements OperationDao<OperationDaoEntity, Long> {
 
   @Override
   public OperationDaoEntity update(OperationDaoEntity obj) {
-    OperationDaoEntity operation = null;
-
-    try (Connection connection = DbConnectionManager.getConnection()) {
-      PreparedStatement preparedStatement
-          = connection.prepareStatement(
-          "UPDATE OPERATIONS set account = ?, debit = ?, credit = ? WHERE id = ?");
-      preparedStatement.setString(1, obj.getAccountNumber());
-      preparedStatement.setBigDecimal(2, obj.getDebit());
-      preparedStatement.setBigDecimal(3, obj.getCredit());
-      preparedStatement.setLong(4, obj.getId());
-
-      preparedStatement.executeUpdate();
-
-      operation = getById(obj.getId());
-    } catch (SQLException e) {
-      throw new RuntimeException(e);
-    }
-
-    return operation;
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -92,37 +74,17 @@ public class DbOperationDao implements OperationDao<OperationDaoEntity, Long> {
 
   @Override
   public void deleteById(Long id) {
-    try (Connection connection = DbConnectionManager.getConnection()) {
-      PreparedStatement preparedStatement
-          = connection.prepareStatement("DELETE FROM OPERATIONS WHERE id = ?");
-
-      preparedStatement.setLong(1, id);
-      preparedStatement.executeUpdate();
-    } catch (SQLException e) {
-      throw new RuntimeException(e);
-    }
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void delete(OperationDaoEntity obj) {
-    deleteById(obj.getId());
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public boolean isExist(Long id) {
-    boolean exists = false;
-
-    try (Connection connection = DbConnectionManager.getConnection()) {
-      PreparedStatement preparedStatement
-          = connection.prepareStatement("SELECT * FROM OPERATIONS WHERE id = ?");
-      preparedStatement.setLong(1, id);
-
-      exists = preparedStatement.executeQuery().next();
-    } catch (SQLException e) {
-      throw new RuntimeException(e);
-    }
-
-    return exists;
+    throw new UnsupportedOperationException();
   }
 
   @Override

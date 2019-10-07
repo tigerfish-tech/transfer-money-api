@@ -5,12 +5,13 @@ import static org.hamcrest.core.Is.is;
 
 import com.fintech.dao.impl.DbUserDao;
 import com.fintech.models.dao.UserDaoEntity;
-import com.zaxxer.hikari.HikariConfig;
+import com.fintech.testutils.DbUtils;
 import java.sql.Connection;
 import java.sql.SQLException;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.core.IsNull;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -23,18 +24,17 @@ public class UserDaoTests {
   private UserDao<UserDaoEntity, String> userDao;
 
   @BeforeClass
-  public static void init() {
-    HikariConfig config = new HikariConfig();
-    config.setJdbcUrl("jdbc:h2:mem:test");
-    config.setUsername("sa");
-    config.setPassword("sa");
+  public static void initClass() {
+    DbUtils.initDb();
+  }
 
-    DbConnectionManager.setConfig(config);
-    DbConnectionManager.create();
+  @AfterClass
+  public static void afterClass() {
+    DbUtils.close();
   }
 
   @Before
-  public void initTest() throws SQLException {
+  public void setUp() throws SQLException {
     userDao = new DbUserDao();
 
     try (Connection connection = DbConnectionManager.getConnection()) {
@@ -44,10 +44,10 @@ public class UserDaoTests {
   }
 
   @After
-  public void afterTest() throws SQLException {
+  public void after() throws SQLException {
     try (Connection connection = DbConnectionManager.getConnection()) {
       connection.createStatement()
-          .executeUpdate("DELETE USERS WHERE id is not null");
+          .executeUpdate("DELETE FROM USERS WHERE id is not null");
     }
   }
 
@@ -74,8 +74,15 @@ public class UserDaoTests {
   }
 
   @Test
-  public void userDeleteByIdTest() {
+  public void userDeleteByIdSuccessTest() {
     userDao.deleteById("123");
+  }
+
+  @Test
+  public void userDeleteTest() {
+    UserDaoEntity user = userDao.getById("123");
+
+    userDao.delete(user);
   }
 
   @Test

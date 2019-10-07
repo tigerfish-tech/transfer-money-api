@@ -5,11 +5,12 @@ import com.fintech.models.ErrorResponse;
 import com.fintech.services.AccountService;
 import com.google.gson.Gson;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.server.RoutingHandler;
 import io.undertow.util.HttpString;
 import java.nio.charset.Charset;
 import java.util.List;
 
-public class AccountRouter {
+public class AccountRouter implements RoutingHandlerFactory {
 
   private AccountService accountService;
 
@@ -34,7 +35,7 @@ public class AccountRouter {
         exc.getResponseHeaders()
             .add(HttpString.tryFromString("Content-Type"), "application/json");
         exc.getResponseSender().send(gson.toJson(
-            ErrorResponse.builder().code(400)
+            ErrorResponse.builder().code(404)
                 .message(e.getMessage())
                 .timestamp(System.currentTimeMillis()).build()));
       }
@@ -76,7 +77,7 @@ public class AccountRouter {
       try {
         Account result = accountService.addAccountToUser(userId, account.getCurrency());
 
-        exc.setStatusCode(200);
+        exc.setStatusCode(201);
         exc.getResponseHeaders()
             .add(HttpString.tryFromString("Content-Type"), "application/json");
         exc.getResponseSender().send(gson.toJson(result));
@@ -102,5 +103,14 @@ public class AccountRouter {
         exc.setStatusCode(404);
       }
     });
+  }
+
+  @Override
+  public RoutingHandler handler() {
+    return new RoutingHandler()
+        .get("/accounts/{number}", this::accountInfo)
+        .post("/users/{userId}/accounts", this::createAccount)
+        .get("/users/{userId}/accounts", this::userAccounts)
+        .delete("/accounts/{number}", this::delete);
   }
 }
