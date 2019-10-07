@@ -2,41 +2,71 @@
 
 Endpoints:
 
-1.  `GET /users?limit={limit}&offset={offset}` - list of users
-2.  `GET /users/{userId}` - user info
-3.  `POST /users` - create new user
+`GET /users?limit={limit}&offset={offset}` - list of users
+
+`GET /users/{userId}` - user info
+
+`POST /users` - create new user
 ```$xslt
 curl -X POST \
   http://localhost:8080/users \
   -H 'Content-Type: application/json' \
   -d '{"fullName": "John Smith"}'
 ```
-4.  `PUT /users/{userId}` - update user 
-```$xslt
-curl -X POST \
-  http://localhost:8080/users/995d0949-f3fb-4aca-b15b-8d1a9e44a4cd \
-  -H 'Content-Type: application/json' \
-  -d '{"fullName": "John Smith"}'
-```
-5.  `DELETE /users/{userId}` - delete user by user id
 
-6.  `GET /accounts/{number}` - get account info by number
-7.  `POST /users/{userId}/accounts` - create new account for user
+`PUT /users/{userId}` - update user 
 ```$xslt
 curl -X POST \
-  http://localhost:8080/users/995d0949-f3fb-4aca-b15b-8d1a9e44a4cd/accounts \
+  http://localhost:8080/users/{userId} \
+  -H 'Content-Type: application/json' \
+  -d '{"fullName": "John Doe"}'
+```
+
+`DELETE /users/{userId}` - delete user by user id
+
+`GET /accounts/{number}` - get account info by number
+
+`POST /users/{userId}/accounts` - create new account for user
+```$xslt
+curl -X POST \
+  http://localhost:8080/users/{userId}/accounts \
   -H 'Content-Type: application/json' \
   -d '{"currency": "USD"}'
 ```
-8.  `GET /users/{userId}/accounts` - accounts of user
-9.  `DELETE /accounts/{number}` - delete account by number
-10. `POST /accounts/{number}/cash-in?amount={amount}` - put money
-11. `POST /accounts/{number}/withdraw?amount={amount}` - withdraw money
-12. `GET /accounts/{number}/balance` - account balance
 
-13. `POST /transfers?from={fromAccountNumber}&to={toAccountNumber}&amount={amount}` - transfer money between accounts
-14. `GET /transfers?limit={limit}&offset={offset}` - list of transfers
-15. `DELETE /transfers/{transferId}` - delete transaction by id
+`GET /users/{userId}/accounts` - accounts of user
+
+`DELETE /accounts/{number}` - delete account by number
+
+`POST /accounts/{number}/cash-in` - put money
+```$xslt
+curl -X POST \
+  http://localhost:8080/accounts/{number}/cash-in \
+  -H 'Content-Type: application/json' \
+  -d '{"amount": 100}'
+```
+
+`POST /accounts/{number}/withdraw` - withdraw money
+```$xslt
+curl -X POST \
+  http://localhost:8080/accounts/{number}/withdraw \
+  -H 'Content-Type: application/json' \
+  -d '{"amount": 100}'
+```
+
+`GET /accounts/{number}/balance` - account balance
+
+`POST /transfers` - transfer money between accounts
+```$xslt
+curl -X POST \
+  http://localhost:8080/transfers \
+  -H 'Content-Type: application/json' \
+  -d '{"from": "KZ00000000000000001","to": "KZ00000000000000002","amount": 20}'
+```
+
+`GET /transfers?limit={limit}&offset={offset}` - list of transfers
+
+`DELETE /transfers/{transferId}` - delete transaction by id
 
 Build
 `gradle jar`
