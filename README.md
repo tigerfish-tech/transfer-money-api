@@ -76,3 +76,5 @@ Run app
 
 Default port 8080
 In-memory db H2
+
+TEST github action
