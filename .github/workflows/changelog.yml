@@ -1,0 +1,15 @@
+name: 'release-changelog'
+on:
+  push:
+    tags:
+      'v*'
+
+jobs:
+  release:
+    runs-on: [ shared ]
+    steps:
+      - name: Build Changelog
+        uses: mikepenz/release-changelog-builder-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
