@@ -6,7 +6,7 @@ on:
 
 jobs:
   release:
-    runs-on: [ shared ]
+    runs-on: ubuntu-latest
     steps:
       - name: Build Changelog
         uses: mikepenz/release-changelog-builder-action@v1
